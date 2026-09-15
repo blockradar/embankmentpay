@@ -78,7 +78,10 @@
 
 .reveal {
   opacity: 0;
-  animation: ep-rise-in var(--ep-duration-in) var(--ep-ease) forwards;
+  /* CSS Modules local-scopes bare keyframe identifiers by default, even
+     though ep-rise-in is a global @keyframes defined in theme.css — without
+     global(), this never resolves and the element stays stuck at opacity:0. */
+  animation: global(ep-rise-in) var(--ep-duration-in) var(--ep-ease) forwards;
 }
 
 @media (max-width: 980px) {
