@@ -1,4 +1,4 @@
-import type { Balance, RewardPosition, RewardProduct, Transaction } from "../../types";
+import type { Balance, OnChainAssetHolding, RewardPosition, RewardProduct, Transaction } from "../../types";
 
 export const mockBalance: Balance = {
   totalUsd: 12480.32,
@@ -54,6 +54,20 @@ export const mockTransactions: Transaction[] = [
     amountUsd: 3000.0,
     timestampLabel: "Sep 8",
     occurredAt: "2026-09-08T00:00:00.000Z",
+  },
+];
+
+export const mockHoldings: OnChainAssetHolding[] = [
+  { assetId: "eth-base", symbol: "ETH", name: "Ether", balance: 0.42, balanceUsd: 1364.16, priceUsd: 3248.0 },
+  { assetId: "usdt-base", symbol: "USDT", name: "Tether USD", balance: 850.0, balanceUsd: 850.0, priceUsd: 1.0 },
+  { assetId: "eurc-solana", symbol: "EURC", name: "Euro Coin", balance: 300.0, balanceUsd: 325.5, priceUsd: 1.09 },
+  {
+    assetId: "wbtc-ethereum",
+    symbol: "WBTC",
+    name: "Wrapped BTC",
+    balance: 0.012,
+    balanceUsd: 769.44,
+    priceUsd: 64120.0,
   },
 ];
 

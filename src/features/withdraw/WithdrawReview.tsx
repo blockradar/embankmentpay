@@ -1,19 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { StepHeader } from "../../components/StepHeader";
 import { FlowLayout } from "../../components/FlowLayout";
-import { formatUsd } from "../../lib/format";
+import { formatCountdown, formatUsd } from "../../lib/format";
+import { useCountdown } from "../../lib/useCountdown";
 import type { FiatWithdrawQuote } from "../../api/types";
 import card from "../dashboard/Card.module.css";
 import styles from "./WithdrawPage.module.css";
-
-function formatCountdown(seconds: number): string {
-  if (seconds >= 60) {
-    const minutes = Math.floor(seconds / 60);
-    const remainder = seconds % 60;
-    return `${minutes}:${remainder.toString().padStart(2, "0")}`;
-  }
-  return `${seconds}s`;
-}
 
 function formatArrival(seconds: number): string {
   if (seconds >= 86_400) {
@@ -47,17 +39,9 @@ export function WithdrawReview({
   onRefreshQuote: () => Promise<void>;
   onConfirm: () => Promise<void>;
 }) {
-  const [secondsLeft, setSecondsLeft] = useState(quote.expiresInSeconds);
+  const secondsLeft = useCountdown(quote.expiresInSeconds, quote);
   const [confirming, setConfirming] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-
-  useEffect(() => {
-    setSecondsLeft(quote.expiresInSeconds);
-    const interval = setInterval(() => {
-      setSecondsLeft((s) => Math.max(0, s - 1));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [quote]);
 
   const expired = secondsLeft <= 0;
   const totalFee = quote.networkFee + quote.transactionFee;

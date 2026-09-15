@@ -81,7 +81,7 @@ export function WithdrawPage() {
         <div className={styles.destination}>To Chase &bull;&bull;4821 &middot; USD</div>
         <AmountInput
           onAmountChange={setAmount}
-          availableUsd={available}
+          available={available}
           error={overBalance ? "Exceeds available balance" : undefined}
         />
         <button

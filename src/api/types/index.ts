@@ -85,6 +85,11 @@ export interface SwapQuote {
   networkFee: number;
   networkFeeInUsd: number;
   estimatedArrivalSeconds: number;
+  /** Original design copy: "Quote valid 15s" — a live market price, not
+   * documented as a named response field in what we could scrape from
+   * Blockradar's docs; verify the real field name against the live API
+   * reference before building the live adapter. */
+  quoteValidSeconds: number;
 }
 
 export type SwapAmountSide = "source" | "target";

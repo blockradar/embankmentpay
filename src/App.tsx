@@ -4,6 +4,7 @@ import { ComingSoonPage } from "./features/shell/ComingSoonPage";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
 import { DepositPage } from "./features/deposit/DepositPage";
 import { WithdrawPage } from "./features/withdraw/WithdrawPage";
+import { SwapPage } from "./features/swap/SwapPage";
 
 function App() {
   return (
@@ -15,7 +16,7 @@ function App() {
           <Route path="activity" element={<ComingSoonPage title="Activity" />} />
           <Route path="deposit" element={<DepositPage />} />
           <Route path="withdraw" element={<WithdrawPage />} />
-          <Route path="swap" element={<ComingSoonPage title="Swap" />} />
+          <Route path="swap" element={<SwapPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
