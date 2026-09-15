@@ -1,4 +1,9 @@
 .card {
+  /* Some cards render as <Link> (an <a>, inline by default) — without an
+     explicit display, vertical padding paints but doesn't count toward the
+     parent's layout height, so the card visually overflows its own box
+     top and bottom instead of being measured correctly. */
+  display: block;
   position: relative;
   background: var(--ep-bg-card);
   border: 1px solid var(--ep-border);
