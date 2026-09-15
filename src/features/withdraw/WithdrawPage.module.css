@@ -4,12 +4,6 @@
   gap: var(--ep-space-5);
 }
 
-.destination {
-  font-size: 13.5px;
-  color: var(--ep-text-secondary);
-  font-weight: 600;
-}
-
 .submit {
   border: none;
   background: linear-gradient(155deg, var(--ep-gold-strong), var(--ep-gold));

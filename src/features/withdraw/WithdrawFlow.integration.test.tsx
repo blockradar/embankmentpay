@@ -19,10 +19,14 @@ describe("Withdraw flow, end to end", () => {
     const balanceCard = screen.getByLabelText("Total balance");
     await user.click(within(balanceCard).getByRole("link", { name: /withdraw/i }));
 
-    await screen.findByText("To Chase ••4821 · USD");
     await screen.findByText("Available $9,280.32");
     await user.type(screen.getByLabelText("Amount in USD"), "100");
-    await user.click(screen.getByRole("button", { name: /review withdrawal/i }));
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+
+    await screen.findByText("Withdraw to bank");
+    await user.click(screen.getByRole("button", { name: /verify account/i }));
+    await screen.findByText(/sending to/i);
+    await user.click(screen.getByRole("button", { name: /^continue$/i }));
 
     await screen.findByText(/rate locked for/i);
     await user.click(screen.getByRole("button", { name: /confirm withdrawal/i }));
@@ -35,7 +39,7 @@ describe("Withdraw flow, end to end", () => {
 
     // "To bank account" also appears on a pre-existing seeded transaction, so
     // find the new row via its distinct subtitle instead.
-    const row = screen.getByText("ACH · Chase ••4821").closest("li") as HTMLElement;
+    const row = screen.getByText("ACH · ••1124").closest("li") as HTMLElement;
     expect(within(row).getByText("To bank account")).toBeInTheDocument();
     expect(within(row).getByText("-$100.00")).toBeInTheDocument();
   });

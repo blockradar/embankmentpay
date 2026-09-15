@@ -3,7 +3,7 @@ import { StepHeader } from "../../components/StepHeader";
 import { FlowLayout } from "../../components/FlowLayout";
 import { formatCountdown, formatUsd } from "../../lib/format";
 import { useCountdown } from "../../lib/useCountdown";
-import type { FiatWithdrawQuote } from "../../api/types";
+import type { FiatWithdrawQuote, ResolvedRecipient } from "../../api/types";
 import card from "../dashboard/Card.module.css";
 import styles from "./WithdrawPage.module.css";
 
@@ -29,12 +29,14 @@ function formatArrival(seconds: number): string {
 export function WithdrawReview({
   amount,
   quote,
+  recipient,
   onBack,
   onRefreshQuote,
   onConfirm,
 }: {
   amount: number;
   quote: FiatWithdrawQuote;
+  recipient: ResolvedRecipient;
   onBack: () => void;
   onRefreshQuote: () => Promise<void>;
   onConfirm: () => Promise<void>;
@@ -70,7 +72,9 @@ export function WithdrawReview({
       <div className={`${card.card} ${styles.reviewCard}`}>
         <div className={styles.reviewAmountLabel}>Withdraw</div>
         <div className={`${styles.reviewAmount} ep-serif`}>{formatUsd(amount)}</div>
-        <div className={styles.reviewSub}>to Chase &bull;&bull;4821</div>
+        <div className={styles.reviewSub}>
+          to {recipient.accountName} &middot; &bull;&bull;{recipient.accountIdentifier.slice(-4)}
+        </div>
 
         <div className={styles.rows}>
           <div className={styles.row}>

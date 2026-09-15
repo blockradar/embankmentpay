@@ -38,14 +38,22 @@ describe("mock adapters satisfy their service contracts", () => {
   });
 
   it("withdraw adapter", async () => {
-    const quote = await withdrawMockAdapter.getFiatWithdrawQuote(100);
+    const { sessionId } = await withdrawMockAdapter.getWithdrawSession(100);
+    expect(sessionId).toEqual(expect.any(String));
+
+    const recipient = await withdrawMockAdapter
+      .resolvePaymentAccount({ sessionId, institutionIdentifier: "021000021", accountIdentifier: "0000481124" })
+      .then((r) => ({ institutionIdentifier: "021000021", accountIdentifier: "0000481124", ...r }));
+    expect(recipient.accountName).toEqual(expect.any(String));
+
+    const quote = await withdrawMockAdapter.getFiatWithdrawQuote({ sessionId, amountUsd: 100, recipient });
     expect(quote).toMatchObject({
       sessionId: expect.any(String),
       debitAmount: 100,
       estimatedArrivalSeconds: expect.any(Number),
     });
 
-    const result = await withdrawMockAdapter.executeFiatWithdraw(quote);
+    const result = await withdrawMockAdapter.executeFiatWithdraw({ quote, recipient });
     expect(result.transactionId).toEqual(expect.any(String));
   });
 

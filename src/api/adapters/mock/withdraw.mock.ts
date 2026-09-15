@@ -3,9 +3,26 @@ import { mockDelay } from "./delay";
 import { useAccountStore } from "./accountStore";
 
 export const withdrawMockAdapter: WithdrawService = {
-  getFiatWithdrawQuote: (amountUsd) =>
+  getWithdrawSession: () => mockDelay({ sessionId: `sess_mock_${Date.now()}` }),
+  resolvePaymentAccount: ({ institutionIdentifier, accountIdentifier }) => {
+    const routing = institutionIdentifier.trim();
+    const account = accountIdentifier.trim();
+    // Loose mock validation (a real US ABA routing number is 9 digits) so the
+    // Recipient screen has a genuine error path to exercise, not just a
+    // happy path.
+    if (!/^\d{9}$/.test(routing)) {
+      return Promise.reject(new Error("Enter a valid 9-digit routing number."));
+    }
+    if (account.length < 4) {
+      return Promise.reject(new Error("Enter a valid account number."));
+    }
+    // Self-withdrawal to the signed-in user's own bank account — same
+    // persona name shown in the sidebar.
+    return mockDelay({ accountName: "Ana Ramos" });
+  },
+  getFiatWithdrawQuote: ({ sessionId, amountUsd }) =>
     mockDelay({
-      sessionId: "sess_mock_1",
+      sessionId,
       debitAmount: amountUsd,
       minAmount: 1,
       networkFee: 0,
@@ -20,7 +37,7 @@ export const withdrawMockAdapter: WithdrawService = {
       // live adapter; the value (1200s) is taken from the documented prose.
       expiresInSeconds: 60 * 20,
     }),
-  executeFiatWithdraw: (quote) => {
+  executeFiatWithdraw: ({ quote, recipient }) => {
     // In mock mode, "execute" is the whole simulation — a real withdrawal is
     // debited server-side once Blockradar confirms it, but there's no
     // separate async step to fake here the way Deposit's push-based
@@ -29,7 +46,7 @@ export const withdrawMockAdapter: WithdrawService = {
     useAccountStore.getState().debitWithdraw(quote.debitAmount, {
       kind: "withdraw-sent",
       title: "To bank account",
-      subtitle: "ACH · Chase ••4821",
+      subtitle: `ACH · ••${recipient.accountIdentifier.slice(-4)}`,
     });
     return mockDelay({ transactionId: "txn_withdraw_mock_1" });
   },

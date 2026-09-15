@@ -61,6 +61,27 @@ export interface VirtualAccount {
   isActive: boolean;
 }
 
+/**
+ * Blockradar's fiat-withdraw recipient identification. Field names
+ * (`institutionIdentifier` = routing/bank code, `accountIdentifier` =
+ * account number) are confirmed verbatim from Blockradar's docs. There is
+ * no saved/reusable payout method in their API — this is collected fresh
+ * on every withdrawal.
+ */
+export interface PaymentMethodData {
+  institutionIdentifier: string;
+  accountIdentifier: string;
+}
+
+/**
+ * Response of POST .../withdraw/fiat/payment-method/resolve — Blockradar's
+ * anti-fraud check, resolving a bank account to its holder's name before
+ * the user can proceed with a withdrawal.
+ */
+export interface ResolvedRecipient extends PaymentMethodData {
+  accountName: string;
+}
+
 /** Blockradar POST /v2/wallets/{id}/withdraw/fiat/quote response. */
 export interface FiatWithdrawQuote {
   sessionId: string;
