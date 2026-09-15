@@ -26,7 +26,7 @@ const LIVE_WALLET_BY_CHAIN: Partial<Record<DepositSourceChain, string>> = {
 function requireWalletId(chain: DepositSourceChain): string {
   const walletId = LIVE_WALLET_BY_CHAIN[chain];
   if (!walletId) {
-    throw new Error(`No live wallet configured for network: ${chain}`);
+    throw new Error(`${chain[0].toUpperCase()}${chain.slice(1)} deposits aren't live yet — try Base for now.`);
   }
   return walletId;
 }

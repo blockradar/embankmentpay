@@ -29,7 +29,7 @@ export function StablecoinPanel({
   onComplete: (info: { headline: string; description: string; newBalanceUsd: number }) => void;
 }) {
   const [chain, setChain] = useState<DepositSourceChain>(env.defaultNetwork);
-  const { data: address, loading } = useAsync(
+  const { data: address, loading, error } = useAsync(
     () => api.deposit.createStablecoinAddress(chain),
     [chain],
   );
@@ -72,7 +72,9 @@ export function StablecoinPanel({
           </div>
         </div>
 
-        {loading || !address ? (
+        {error ? (
+          <p className={styles.error}>{error.message}</p>
+        ) : loading || !address ? (
           <p className={styles.loading}>Generating your {chainLabel} deposit address&hellip;</p>
         ) : (
           <>
