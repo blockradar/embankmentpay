@@ -6,6 +6,8 @@ const glyph: Record<TransactionKind, string> = {
   "withdraw-sent": "↓",
   swap: "⇄",
   "bank-deposit": "+",
+  "earn-add": "%",
+  "earn-withdraw": "%",
 };
 
 export function TransactionGlyph({ kind }: { kind: TransactionKind }) {

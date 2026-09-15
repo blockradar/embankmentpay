@@ -24,6 +24,20 @@ interface AccountState {
     toAmountUsd: number,
     txn: Omit<Transaction, "id" | "occurredAt" | "timestampLabel" | "amountUsd">,
   ) => void;
+  /**
+   * Moves money from available into the Earn position. This is a transfer
+   * within the account, not new money — `balance.totalUsd` is unchanged,
+   * only the available/inEarn split moves.
+   */
+  moveToEarn: (
+    amountUsd: number,
+    txn: Omit<Transaction, "id" | "occurredAt" | "timestampLabel" | "amountUsd">,
+  ) => void;
+  /** The exact inverse of moveToEarn — moves principal back to available. */
+  moveFromEarn: (
+    amountUsd: number,
+    txn: Omit<Transaction, "id" | "occurredAt" | "timestampLabel" | "amountUsd">,
+  ) => void;
   /** Test-only: restores the store to its seed state. */
   reset: () => void;
 }
@@ -125,6 +139,59 @@ export const useAccountStore = create<AccountState>((set) => ({
           ...state.balance,
           totalUsd: state.balance.totalUsd + toAmountUsd,
           availableUsd: state.balance.availableUsd + toAmountUsd,
+        },
+        transactions: [transaction, ...state.transactions],
+      };
+    }),
+  moveToEarn: (amountUsd, txn) =>
+    set((state) => {
+      txnSeq += 1;
+      // Backstop against moving more than is actually available — the
+      // amount screen's ceiling should already have prevented this.
+      const safeAmount = Math.min(amountUsd, state.balance.availableUsd);
+      const transaction: Transaction = {
+        ...txn,
+        amountUsd: -safeAmount,
+        id: `txn_mock_${Date.now()}_${txnSeq}`,
+        occurredAt: new Date().toISOString(),
+        timestampLabel: "Just now",
+      };
+      return {
+        balance: {
+          ...state.balance,
+          availableUsd: Math.max(0, state.balance.availableUsd - safeAmount),
+          inEarnUsd: state.balance.inEarnUsd + safeAmount,
+        },
+        rewardPosition: {
+          ...state.rewardPosition,
+          principalUsd: state.rewardPosition.principalUsd + safeAmount,
+        },
+        transactions: [transaction, ...state.transactions],
+      };
+    }),
+  moveFromEarn: (amountUsd, txn) =>
+    set((state) => {
+      txnSeq += 1;
+      // Backstop against moving out more than is actually earning — the
+      // amount screen's ceiling should already have prevented this, this is
+      // the guarantee that a "Move out" can never exceed the Earn balance.
+      const safeAmount = Math.min(amountUsd, state.rewardPosition.principalUsd);
+      const transaction: Transaction = {
+        ...txn,
+        amountUsd: safeAmount,
+        id: `txn_mock_${Date.now()}_${txnSeq}`,
+        occurredAt: new Date().toISOString(),
+        timestampLabel: "Just now",
+      };
+      return {
+        balance: {
+          ...state.balance,
+          availableUsd: state.balance.availableUsd + safeAmount,
+          inEarnUsd: Math.max(0, state.balance.inEarnUsd - safeAmount),
+        },
+        rewardPosition: {
+          ...state.rewardPosition,
+          principalUsd: Math.max(0, state.rewardPosition.principalUsd - safeAmount),
         },
         transactions: [transaction, ...state.transactions],
       };

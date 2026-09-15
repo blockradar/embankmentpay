@@ -28,7 +28,9 @@ export type TransactionKind =
   | "deposit-received"
   | "withdraw-sent"
   | "swap"
-  | "bank-deposit";
+  | "bank-deposit"
+  | "earn-add"
+  | "earn-withdraw";
 
 export interface Transaction {
   id: string;
