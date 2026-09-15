@@ -6,6 +6,15 @@ import type { FiatWithdrawQuote } from "../../api/types";
 import card from "../dashboard/Card.module.css";
 import styles from "./WithdrawPage.module.css";
 
+function formatCountdown(seconds: number): string {
+  if (seconds >= 60) {
+    const minutes = Math.floor(seconds / 60);
+    const remainder = seconds % 60;
+    return `${minutes}:${remainder.toString().padStart(2, "0")}`;
+  }
+  return `${seconds}s`;
+}
+
 function formatArrival(seconds: number): string {
   if (seconds >= 86_400) {
     const days = Math.round(seconds / 86_400);
@@ -93,7 +102,7 @@ export function WithdrawReview({
         <p className={`${styles.note} ${expired ? styles.noteExpired : ""}`}>
           {expired
             ? "This quote has expired — rates may have changed."
-            : `Rate locked for ${secondsLeft}s. Your bank may apply its own inbound fees.`}
+            : `Rate locked for ${formatCountdown(secondsLeft)}. Your bank may apply its own inbound fees.`}
         </p>
 
         {expired ? (

@@ -60,7 +60,7 @@ describe("WithdrawPage", () => {
     expect(await screen.findByText("$100.00")).toBeInTheDocument();
     expect(screen.getByText("to Chase ••4821")).toBeInTheDocument();
     expect(screen.getByText("Free")).toBeInTheDocument();
-    expect(screen.getByText(/rate locked for \d+s/i)).toBeInTheDocument();
+    expect(screen.getByText(/rate locked for \d+:\d{2}/i)).toBeInTheDocument();
   });
 
   it("an expired quote disables confirm and offers a way to get a fresh one", async () => {
@@ -79,10 +79,10 @@ describe("WithdrawPage", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(300);
     });
-    expect(screen.getByText(/rate locked for 60s/i)).toBeInTheDocument();
+    expect(screen.getByText(/rate locked for 20:00/i)).toBeInTheDocument();
 
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(61_000);
+      await vi.advanceTimersByTimeAsync(20 * 60 * 1000 + 1_000);
     });
 
     expect(screen.getByText(/quote has expired/i)).toBeInTheDocument();

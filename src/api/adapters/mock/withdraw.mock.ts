@@ -12,7 +12,13 @@ export const withdrawMockAdapter: WithdrawService = {
       networkFeeInUsd: 0,
       transactionFee: 0,
       estimatedArrivalSeconds: 60 * 60 * 24,
-      expiresInSeconds: 60,
+      // Blockradar's withdraw-fiat guide documents a 20-minute rate/routing
+      // session validity — the exact response field name wasn't confirmed
+      // against the live API reference (only available via an interactive,
+      // JS-rendered schema we couldn't scrape), so `expiresInSeconds` here is
+      // our best-effort shape. Verify the real field name when building the
+      // live adapter; the value (1200s) is taken from the documented prose.
+      expiresInSeconds: 60 * 20,
     }),
   executeFiatWithdraw: (quote) => {
     // In mock mode, "execute" is the whole simulation — a real withdrawal is
