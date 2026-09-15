@@ -1,0 +1,16 @@
+.wrap {
+  max-width: 480px;
+}
+
+.title {
+  font-family: var(--ep-font-display);
+  font-style: italic;
+  font-size: 36px;
+  margin-bottom: var(--ep-space-3);
+}
+
+.desc {
+  color: var(--ep-text-secondary);
+  font-size: 14.5px;
+  line-height: 1.6;
+}

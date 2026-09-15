@@ -1,0 +1,17 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--ep-bg);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: var(--ep-space-10) var(--ep-space-12);
+}
+
+@media (max-width: 900px) {
+  .main {
+    padding: var(--ep-space-6);
+  }
+}

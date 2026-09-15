@@ -1,0 +1,110 @@
+:root {
+  color-scheme: dark;
+
+  /* ---- palette ---- */
+  --ep-bg: #09090a;
+  --ep-bg-raised: #111113;
+  --ep-bg-card: #121214;
+  --ep-bg-card-hover: #17171a;
+  --ep-border: rgba(255, 255, 255, 0.08);
+  --ep-border-strong: rgba(255, 255, 255, 0.14);
+
+  --ep-text-primary: #f4f1ea;
+  --ep-text-secondary: #a8a29a;
+  --ep-text-tertiary: #6f6a63;
+
+  --ep-gold: #d4a054;
+  --ep-gold-strong: #e0b16a;
+  --ep-gold-soft: rgba(212, 160, 84, 0.14);
+  --ep-gold-ink: #1a1408;
+
+  --ep-green: #8fbf9a;
+  --ep-green-soft: rgba(143, 191, 154, 0.14);
+  --ep-coral: #d98a76;
+  --ep-coral-soft: rgba(217, 138, 118, 0.14);
+
+  --ep-cream: #f4efe6;
+
+  /* ---- type ---- */
+  --ep-font-display: "Newsreader", "Iowan Old Style", serif;
+  --ep-font-ui: "Archivo", -apple-system, sans-serif;
+
+  /* ---- spacing scale ---- */
+  --ep-space-1: 4px;
+  --ep-space-2: 8px;
+  --ep-space-3: 12px;
+  --ep-space-4: 16px;
+  --ep-space-5: 20px;
+  --ep-space-6: 24px;
+  --ep-space-8: 32px;
+  --ep-space-10: 40px;
+  --ep-space-12: 48px;
+  --ep-space-16: 64px;
+
+  /* ---- radii ---- */
+  --ep-radius-sm: 10px;
+  --ep-radius-md: 14px;
+  --ep-radius-lg: 20px;
+  --ep-radius-pill: 999px;
+
+  /* ---- motion ---- */
+  --ep-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ep-duration-in: 520ms;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--ep-bg);
+  color: var(--ep-text-primary);
+  font-family: var(--ep-font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+}
+
+.ep-serif {
+  font-family: var(--ep-font-display);
+  font-style: italic;
+  font-optical-sizing: auto;
+  letter-spacing: -0.01em;
+}
+
+@keyframes ep-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

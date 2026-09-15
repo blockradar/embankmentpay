@@ -1,0 +1,132 @@
+.sidebar {
+  width: 272px;
+  flex-shrink: 0;
+  min-height: 100vh;
+  padding: var(--ep-space-6) var(--ep-space-5);
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--ep-border);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--ep-space-3);
+  padding: var(--ep-space-2) var(--ep-space-2) var(--ep-space-8);
+}
+
+.mark {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--ep-radius-sm);
+  background: linear-gradient(155deg, var(--ep-gold-strong), var(--ep-gold));
+  color: var(--ep-gold-ink);
+  display: grid;
+  place-items: center;
+  font-family: var(--ep-font-display);
+  font-style: italic;
+  font-size: 19px;
+  flex-shrink: 0;
+}
+
+.wordmark {
+  font-family: var(--ep-font-display);
+  font-style: italic;
+  font-size: 19px;
+  letter-spacing: -0.01em;
+  color: var(--ep-text-primary);
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ep-space-1);
+}
+
+.navLabel {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ep-text-tertiary);
+  padding: var(--ep-space-6) var(--ep-space-3) var(--ep-space-2);
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: var(--ep-space-3);
+  padding: var(--ep-space-3);
+  border-radius: var(--ep-radius-sm);
+  color: var(--ep-text-secondary);
+  font-size: 14.5px;
+  font-weight: 500;
+  transition: background 160ms var(--ep-ease), color 160ms var(--ep-ease);
+}
+
+.link svg {
+  color: var(--ep-text-tertiary);
+  transition: color 160ms var(--ep-ease);
+}
+
+.link:hover {
+  background: var(--ep-bg-card-hover);
+  color: var(--ep-text-primary);
+}
+
+.linkActive {
+  composes: link;
+  background: var(--ep-gold-soft);
+  color: var(--ep-text-primary);
+}
+
+.linkActive svg {
+  color: var(--ep-gold);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: var(--ep-space-3);
+  padding: var(--ep-space-3);
+  border-radius: var(--ep-radius-md);
+  background: var(--ep-bg-card);
+  border: 1px solid var(--ep-border);
+}
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--ep-radius-pill);
+  background: var(--ep-gold-soft);
+  color: var(--ep-gold-strong);
+  display: grid;
+  place-items: center;
+  font-size: 12.5px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.profileName {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ep-text-primary);
+}
+
+.profileMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ep-text-tertiary);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ep-green);
+}
