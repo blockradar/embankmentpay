@@ -3,6 +3,7 @@ import { AppShell } from "./features/shell/AppShell";
 import { ComingSoonPage } from "./features/shell/ComingSoonPage";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
 import { DepositPage } from "./features/deposit/DepositPage";
+import { WithdrawPage } from "./features/withdraw/WithdrawPage";
 
 function App() {
   return (
@@ -13,7 +14,7 @@ function App() {
           <Route path="earn" element={<ComingSoonPage title="Earn" />} />
           <Route path="activity" element={<ComingSoonPage title="Activity" />} />
           <Route path="deposit" element={<DepositPage />} />
-          <Route path="withdraw" element={<ComingSoonPage title="Withdraw" />} />
+          <Route path="withdraw" element={<WithdrawPage />} />
           <Route path="swap" element={<ComingSoonPage title="Swap" />} />
         </Route>
       </Routes>

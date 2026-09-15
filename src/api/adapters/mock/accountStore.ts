@@ -11,6 +11,11 @@ interface AccountState {
     amountUsd: number,
     txn: Omit<Transaction, "id" | "occurredAt" | "timestampLabel" | "amountUsd">,
   ) => void;
+  /** Debits the mock account the way a confirmed withdrawal execute would. */
+  debitWithdraw: (
+    amountUsd: number,
+    txn: Omit<Transaction, "id" | "occurredAt" | "timestampLabel" | "amountUsd">,
+  ) => void;
   /** Test-only: restores the store to its seed state. */
   reset: () => void;
 }
@@ -50,6 +55,29 @@ export const useAccountStore = create<AccountState>((set) => ({
           ...state.balance,
           totalUsd: state.balance.totalUsd + amountUsd,
           availableUsd: state.balance.availableUsd + amountUsd,
+        },
+        transactions: [transaction, ...state.transactions],
+      };
+    }),
+  debitWithdraw: (amountUsd, txn) =>
+    set((state) => {
+      txnSeq += 1;
+      // Defends against ever going negative if this is somehow called with
+      // more than available — the amount screen's validation should already
+      // have prevented that, this is a backstop, not the primary guard.
+      const safeAmount = Math.min(amountUsd, state.balance.availableUsd);
+      const transaction: Transaction = {
+        ...txn,
+        amountUsd: -safeAmount,
+        id: `txn_mock_${Date.now()}_${txnSeq}`,
+        occurredAt: new Date().toISOString(),
+        timestampLabel: "Just now",
+      };
+      return {
+        balance: {
+          ...state.balance,
+          totalUsd: Math.max(0, state.balance.totalUsd - safeAmount),
+          availableUsd: Math.max(0, state.balance.availableUsd - safeAmount),
         },
         transactions: [transaction, ...state.transactions],
       };

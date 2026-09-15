@@ -1,8 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { depositMockAdapter } from "./deposit.mock";
 import { earnMockAdapter } from "./earn.mock";
 import { swapMockAdapter } from "./swap.mock";
 import { withdrawMockAdapter } from "./withdraw.mock";
+import { useAccountStore } from "./accountStore";
+
+beforeEach(() => {
+  useAccountStore.getState().reset();
+});
 
 /**
  * Basic contract tests: assert the mock adapters return objects shaped like
@@ -40,7 +45,7 @@ describe("mock adapters satisfy their service contracts", () => {
       estimatedArrivalSeconds: expect.any(Number),
     });
 
-    const result = await withdrawMockAdapter.executeFiatWithdraw(quote.sessionId);
+    const result = await withdrawMockAdapter.executeFiatWithdraw(quote);
     expect(result.transactionId).toEqual(expect.any(String));
   });
 
