@@ -98,7 +98,7 @@ export function StablecoinPanel({
               </li>
             </ol>
 
-            {env.apiMode === "mock" && (
+            {env.apiModes.deposit === "mock" && (
               <button
                 type="button"
                 className={styles.simulate}

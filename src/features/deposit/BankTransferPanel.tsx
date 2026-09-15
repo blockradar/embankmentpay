@@ -75,7 +75,7 @@ export function BankTransferPanel({
               </li>
             </ol>
 
-            {env.apiMode === "mock" && (
+            {env.apiModes.deposit === "mock" && (
               <button
                 type="button"
                 className={styles.simulate}
