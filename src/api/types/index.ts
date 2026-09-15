@@ -7,6 +7,13 @@
 export type SettlementNetwork = "arc" | "base";
 export type StablecoinAsset = "USDC" | "USDT" | "EURC";
 
+/**
+ * Chains a stablecoin deposit can be *sent from* — broader than
+ * SettlementNetwork, since Blockradar bridges deposits from many source
+ * chains into the account's settlement network (arc|base).
+ */
+export type DepositSourceChain = "arc" | "base" | "ethereum" | "polygon" | "solana" | "tron";
+
 export interface Balance {
   totalUsd: number;
   availableUsd: number;
@@ -37,7 +44,7 @@ export interface Transaction {
 export interface DepositAddress {
   id: string;
   address: string;
-  blockchain: SettlementNetwork;
+  blockchain: DepositSourceChain;
   asset: StablecoinAsset;
 }
 

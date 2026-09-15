@@ -1,0 +1,23 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ep-space-2);
+  background: var(--ep-bg-raised);
+  border: 1px solid var(--ep-border);
+  color: var(--ep-text-primary);
+  border-radius: var(--ep-radius-sm);
+  padding: 9px var(--ep-space-4);
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 160ms var(--ep-ease), border-color 160ms var(--ep-ease);
+}
+
+.btn:hover {
+  background: var(--ep-bg-card-hover);
+  border-color: var(--ep-border-strong);
+}
+
+.btn.copied {
+  border-color: var(--ep-green);
+  color: var(--ep-green);
+}

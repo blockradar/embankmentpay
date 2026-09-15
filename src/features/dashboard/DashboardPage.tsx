@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { api } from "../../api";
 import { useAsync } from "../../lib/useAsync";
 import styles from "./DashboardPage.module.css";
@@ -23,12 +24,12 @@ export function DashboardPage() {
           <h1 className={styles.title}>Dashboard</h1>
         </div>
         <div className={styles.headerActions}>
-          <a href="/activity" className={styles.ghostButton}>
+          <Link to="/activity" className={styles.ghostButton}>
             Activity
-          </a>
-          <a href="/deposit" className={styles.goldButton}>
+          </Link>
+          <Link to="/deposit" className={styles.goldButton}>
             + Add money
-          </a>
+          </Link>
         </div>
       </header>
 

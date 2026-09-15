@@ -1,7 +1,7 @@
 import type {
   Balance,
   DepositAddress,
-  SettlementNetwork,
+  DepositSourceChain,
   Transaction,
   VirtualAccount,
 } from "../types";
@@ -9,6 +9,6 @@ import type {
 export interface DepositService {
   getBalance(): Promise<Balance>;
   getRecentTransactions(limit?: number): Promise<Transaction[]>;
-  createStablecoinAddress(network: SettlementNetwork): Promise<DepositAddress>;
+  createStablecoinAddress(chain: DepositSourceChain): Promise<DepositAddress>;
   createVirtualAccount(currency: "USD"): Promise<VirtualAccount>;
 }

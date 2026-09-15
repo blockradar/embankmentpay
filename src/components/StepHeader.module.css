@@ -1,0 +1,38 @@
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ep-space-4);
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: var(--ep-space-3);
+}
+
+.title {
+  font-size: 26px;
+  margin: 0;
+}
+
+.backBtn,
+.closeBtn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--ep-radius-pill);
+  background: var(--ep-bg-raised);
+  border: 1px solid var(--ep-border);
+  color: var(--ep-text-secondary);
+  transition: background 160ms var(--ep-ease), color 160ms var(--ep-ease);
+  flex-shrink: 0;
+}
+
+.backBtn:hover,
+.closeBtn:hover {
+  background: var(--ep-bg-card-hover);
+  color: var(--ep-text-primary);
+}
