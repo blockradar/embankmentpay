@@ -1,6 +1,34 @@
-import type { FiatWithdrawQuote, PaymentMethodData, ResolvedRecipient } from "../types";
+import type {
+  CryptoWithdrawFee,
+  CryptoWithdrawResult,
+  FiatWithdrawQuote,
+  PaymentMethodData,
+  ResolvedRecipient,
+  SettlementNetwork,
+} from "../types";
 
 export interface WithdrawService {
+  /**
+   * Mirrors POST .../withdraw/network-fee — a same-chain on-chain send has
+   * no session/expiry concept (unlike fiat withdraw or swap), just a
+   * point-in-time fee/arrival estimate.
+   */
+  getCryptoWithdrawFee(params: {
+    network: SettlementNetwork;
+    address: string;
+    amountUsd: number;
+  }): Promise<CryptoWithdrawFee>;
+  /** Mirrors POST .../withdraw — sends on-chain to an external address on the same chain. */
+  executeCryptoWithdraw(params: {
+    network: SettlementNetwork;
+    address: string;
+    amountUsd: number;
+  }): Promise<CryptoWithdrawResult>;
+
+  // --- Fiat withdrawal — kept for a possible future phase, not currently
+  // wired into any screen. The active Withdraw flow is crypto-only (see
+  // WithdrawPage). This is real, verified Blockradar research, not dead
+  // guesswork, so it stays rather than being deleted.
   /**
    * Mirrors GET .../withdraw/fiat/rates — establishes a sessionId for this
    * withdrawal attempt, scoped to the requested amount. Kept through

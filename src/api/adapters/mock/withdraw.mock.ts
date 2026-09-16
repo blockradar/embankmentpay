@@ -1,8 +1,25 @@
 import type { WithdrawService } from "../../operations/withdraw.service";
+import { truncateAddress } from "../../../lib/format";
 import { mockDelay } from "./delay";
 import { useAccountStore } from "./accountStore";
 
+const NETWORK_LABEL: Record<string, string> = { base: "Base", arc: "Arc" };
+
 export const withdrawMockAdapter: WithdrawService = {
+  getCryptoWithdrawFee: () =>
+    // Base (and presumably Arc) is a cheap L2 — a few cents of gas, arrives
+    // within a block or two. Not tied to `network`/`address` in the mock
+    // since we're not estimating real gas yet.
+    mockDelay({ networkFeeUsd: 0.02, estimatedArrivalSeconds: 30 }),
+  executeCryptoWithdraw: ({ network, address, amountUsd }) => {
+    useAccountStore.getState().debitWithdraw(amountUsd, {
+      kind: "withdraw-sent",
+      title: "Sent",
+      subtitle: `To ${truncateAddress(address)} · ${NETWORK_LABEL[network] ?? network}`,
+    });
+    return mockDelay({ id: `txn_withdraw_mock_${Date.now()}`, hash: `0x${"mock".repeat(16)}` });
+  },
+
   getWithdrawSession: () => mockDelay({ sessionId: `sess_mock_${Date.now()}` }),
   resolvePaymentAccount: ({ institutionIdentifier, accountIdentifier }) => {
     const routing = institutionIdentifier.trim();

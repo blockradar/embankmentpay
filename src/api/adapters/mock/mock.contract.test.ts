@@ -37,7 +37,26 @@ describe("mock adapters satisfy their service contracts", () => {
     expect(account).toMatchObject({ currency: "USD", accountNumber: expect.any(String) });
   });
 
-  it("withdraw adapter", async () => {
+  it("withdraw adapter — crypto (active flow)", async () => {
+    const fee = await withdrawMockAdapter.getCryptoWithdrawFee({
+      network: "base",
+      address: "0x1234567890123456789012345678901234567890",
+      amountUsd: 100,
+    });
+    expect(fee).toMatchObject({
+      networkFeeUsd: expect.any(Number),
+      estimatedArrivalSeconds: expect.any(Number),
+    });
+
+    const result = await withdrawMockAdapter.executeCryptoWithdraw({
+      network: "base",
+      address: "0x1234567890123456789012345678901234567890",
+      amountUsd: 100,
+    });
+    expect(result).toMatchObject({ id: expect.any(String), hash: expect.any(String) });
+  });
+
+  it("withdraw adapter — fiat (kept for a future phase, not currently wired to any screen)", async () => {
     const { sessionId } = await withdrawMockAdapter.getWithdrawSession(100);
     expect(sessionId).toEqual(expect.any(String));
 

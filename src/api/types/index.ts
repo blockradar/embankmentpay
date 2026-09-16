@@ -115,6 +115,25 @@ export interface SwapQuote {
   quoteValidSeconds: number;
 }
 
+/**
+ * Blockradar POST /wallets/{id}/withdraw/network-fee response (partial —
+ * only the fields this app displays). Confirmed field names verbatim.
+ */
+export interface CryptoWithdrawFee {
+  networkFeeUsd: number;
+  estimatedArrivalSeconds: number;
+}
+
+/**
+ * Blockradar POST /wallets/{id}/withdraw response (partial). A same-chain
+ * on-chain send — no session/expiry concept exists for this, unlike fiat
+ * withdraw or swap quotes.
+ */
+export interface CryptoWithdrawResult {
+  id: string;
+  hash: string;
+}
+
 export type SwapAmountSide = "source" | "target";
 export type SwapOrder = "FASTEST" | "CHEAPEST" | "RECOMMENDED" | "NO_SLIPPAGE";
 

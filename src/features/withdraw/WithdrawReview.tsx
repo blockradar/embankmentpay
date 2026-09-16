@@ -1,61 +1,41 @@
 import { useState } from "react";
 import { StepHeader } from "../../components/StepHeader";
 import { FlowLayout } from "../../components/FlowLayout";
-import { formatCountdown, formatUsd } from "../../lib/format";
-import { useCountdown } from "../../lib/useCountdown";
-import type { FiatWithdrawQuote, ResolvedRecipient } from "../../api/types";
+import { formatUsd, truncateAddress } from "../../lib/format";
+import type { CryptoWithdrawFee, SettlementNetwork } from "../../api/types";
 import card from "../dashboard/Card.module.css";
 import styles from "./WithdrawPage.module.css";
 
+const NETWORK_LABEL: Record<SettlementNetwork, string> = { base: "Base", arc: "Arc" };
+
 function formatArrival(seconds: number): string {
-  if (seconds >= 86_400) {
-    const days = Math.round(seconds / 86_400);
-    return days <= 1 ? "1 business day" : `${days} business days`;
-  }
-  if (seconds >= 3_600) {
-    const hours = Math.round(seconds / 3_600);
-    return `~${hours} hour${hours === 1 ? "" : "s"}`;
-  }
-  const minutes = Math.max(1, Math.round(seconds / 60));
+  if (seconds < 60) return `~${seconds}s`;
+  const minutes = Math.round(seconds / 60);
   return `~${minutes} minute${minutes === 1 ? "" : "s"}`;
 }
 
 /**
- * The one step in Withdraw that keeps a hard review — unlike Deposit, this
- * moves real money out against a rate-locked quote, so a pause-and-confirm
- * (with a visible countdown, matching the original design's trust detail)
- * is warranted rather than redundant.
+ * Withdraw's one hard review step — a same-chain on-chain send is
+ * irreversible once confirmed, unlike Deposit, so a pause is warranted.
+ * Unlike fiat withdraw or swap, there's no rate-locked quote/session here
+ * (just a point-in-time network-fee estimate), so no countdown.
  */
 export function WithdrawReview({
+  network,
+  address,
   amount,
-  quote,
-  recipient,
+  fee,
   onBack,
-  onRefreshQuote,
   onConfirm,
 }: {
+  network: SettlementNetwork;
+  address: string;
   amount: number;
-  quote: FiatWithdrawQuote;
-  recipient: ResolvedRecipient;
+  fee: CryptoWithdrawFee;
   onBack: () => void;
-  onRefreshQuote: () => Promise<void>;
   onConfirm: () => Promise<void>;
 }) {
-  const secondsLeft = useCountdown(quote.expiresInSeconds, quote);
   const [confirming, setConfirming] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const expired = secondsLeft <= 0;
-  const totalFee = quote.networkFee + quote.transactionFee;
-
-  async function handleRefresh() {
-    setRefreshing(true);
-    try {
-      await onRefreshQuote();
-    } finally {
-      setRefreshing(false);
-    }
-  }
 
   async function handleConfirm() {
     setConfirming(true);
@@ -73,35 +53,25 @@ export function WithdrawReview({
         <div className={styles.reviewAmountLabel}>Withdraw</div>
         <div className={`${styles.reviewAmount} ep-serif`}>{formatUsd(amount)}</div>
         <div className={styles.reviewSub}>
-          to {recipient.accountName} &middot; &bull;&bull;{recipient.accountIdentifier.slice(-4)}
+          to {truncateAddress(address)} &middot; {NETWORK_LABEL[network]}
         </div>
 
         <div className={styles.rows}>
           <div className={styles.row}>
-            <span>Fee</span>
-            <span>{totalFee > 0 ? formatUsd(totalFee) : "Free"}</span>
+            <span>Network fee</span>
+            <span>{fee.networkFeeUsd > 0 ? formatUsd(fee.networkFeeUsd) : "Free"}</span>
           </div>
           <div className={styles.row}>
             <span>Arrives</span>
-            <span>{formatArrival(quote.estimatedArrivalSeconds)}</span>
+            <span>{formatArrival(fee.estimatedArrivalSeconds)}</span>
           </div>
         </div>
 
-        <p className={`${styles.note} ${expired ? styles.noteExpired : ""}`}>
-          {expired
-            ? "This quote has expired — rates may have changed."
-            : `Rate locked for ${formatCountdown(secondsLeft)}. Your bank may apply its own inbound fees.`}
-        </p>
+        <p className={styles.note}>Sent directly on-chain — this can't be reversed once confirmed.</p>
 
-        {expired ? (
-          <button type="button" className={styles.submit} onClick={handleRefresh} disabled={refreshing}>
-            {refreshing ? "Getting new quote…" : "Get new quote"}
-          </button>
-        ) : (
-          <button type="button" className={styles.submit} onClick={handleConfirm} disabled={confirming}>
-            {confirming ? "Confirming…" : "Confirm withdrawal"}
-          </button>
-        )}
+        <button type="button" className={styles.submit} onClick={handleConfirm} disabled={confirming}>
+          {confirming ? "Confirming…" : "Confirm withdrawal"}
+        </button>
       </div>
     </FlowLayout>
   );

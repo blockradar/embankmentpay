@@ -4,6 +4,68 @@
   gap: var(--ep-space-5);
 }
 
+.chainRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ep-space-2);
+}
+
+.chip {
+  padding: 8px var(--ep-space-4);
+  border-radius: var(--ep-radius-pill);
+  background: var(--ep-bg-raised);
+  border: 1px solid var(--ep-border);
+  color: var(--ep-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 160ms var(--ep-ease), border-color 160ms var(--ep-ease),
+    color 160ms var(--ep-ease);
+}
+
+.chip:hover {
+  border-color: var(--ep-border-strong);
+}
+
+.chipSelected {
+  background: var(--ep-cream);
+  color: #17140f;
+  border-color: var(--ep-cream);
+}
+
+.addressField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.addressLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ep-text-tertiary);
+}
+
+.addressInput {
+  font-family: ui-monospace, "SF Mono", monospace;
+  font-size: 13.5px;
+  background: var(--ep-bg-raised);
+  border: 1px solid var(--ep-border);
+  border-radius: var(--ep-radius-sm);
+  padding: var(--ep-space-3) var(--ep-space-4);
+  color: var(--ep-text-primary);
+}
+
+.addressInput:focus {
+  outline: none;
+  border-color: var(--ep-border-strong);
+}
+
+.addressError {
+  color: var(--ep-coral);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
 .submit {
   border: none;
   background: linear-gradient(155deg, var(--ep-gold-strong), var(--ep-gold));
@@ -85,8 +147,4 @@
   color: var(--ep-text-tertiary);
   margin: 0 0 var(--ep-space-6);
   min-height: 1.5em;
-}
-
-.noteExpired {
-  color: var(--ep-coral);
 }
