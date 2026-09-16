@@ -112,6 +112,7 @@ export function WithdrawPage() {
         <AmountInput
           onAmountChange={setAmount}
           available={available}
+          unitLabel="USDC"
           error={overBalance ? "Exceeds available balance" : undefined}
         />
 

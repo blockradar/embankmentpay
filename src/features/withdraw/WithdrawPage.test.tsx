@@ -24,7 +24,7 @@ async function renderReady() {
 
 /** Fills amount then address (matching the flow's order), advances to Review. */
 async function goToReview(user: ReturnType<typeof userEvent.setup>, amount = "100") {
-  await user.type(screen.getByLabelText("Amount in USD"), amount);
+  await user.type(screen.getByLabelText("Amount in USDC"), amount);
   await user.type(screen.getByLabelText("Destination address"), VALID_ARC_ADDRESS);
   await user.click(screen.getByRole("button", { name: /continue/i }));
   await screen.findByText("Review withdrawal");
@@ -47,7 +47,7 @@ describe("WithdrawPage — amount + destination step", () => {
 
   it("shows the amount field before the destination address field", async () => {
     await renderReady();
-    const amountInput = screen.getByLabelText("Amount in USD");
+    const amountInput = screen.getByLabelText("Amount in USDC");
     const addressInput = screen.getByLabelText("Destination address");
     expect(
       amountInput.compareDocumentPosition(addressInput) & Node.DOCUMENT_POSITION_FOLLOWING,
@@ -59,7 +59,7 @@ describe("WithdrawPage — amount + destination step", () => {
     const submit = screen.getByRole("button", { name: /continue/i });
     expect(submit).toBeDisabled();
 
-    await user.type(screen.getByLabelText("Amount in USD"), "50");
+    await user.type(screen.getByLabelText("Amount in USDC"), "50");
     expect(submit).toBeDisabled(); // no address yet
 
     await user.type(screen.getByLabelText("Destination address"), VALID_ARC_ADDRESS);
@@ -75,7 +75,7 @@ describe("WithdrawPage — amount + destination step", () => {
 
   it("flags an over-balance amount", async () => {
     const { user } = await renderReady();
-    await user.type(screen.getByLabelText("Amount in USD"), "999999");
+    await user.type(screen.getByLabelText("Amount in USDC"), "999999");
     await user.type(screen.getByLabelText("Destination address"), VALID_ARC_ADDRESS);
     expect(await screen.findByText("Exceeds available balance")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /continue/i })).toBeDisabled();

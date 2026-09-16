@@ -22,7 +22,7 @@ describe("Withdraw flow, end to end", () => {
     await user.click(within(balanceCard).getByRole("link", { name: /withdraw/i }));
 
     await screen.findByText("Available $9,280.32");
-    await user.type(screen.getByLabelText("Amount in USD"), "100");
+    await user.type(screen.getByLabelText("Amount in USDC"), "100");
     await user.type(screen.getByLabelText("Destination address"), VALID_BASE_ADDRESS);
     await user.click(screen.getByRole("button", { name: /continue/i }));
 
