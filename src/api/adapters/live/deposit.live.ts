@@ -7,8 +7,9 @@ import type {
   TransactionKind,
   VirtualAccount,
 } from "../../types";
-import { blockradarRequest, blockradarRequestV2 } from "../../client";
+import { blockradarRequest } from "../../client";
 import { env } from "../../../config/env";
+import { depositMockAdapter } from "../mock/deposit.mock";
 
 /**
  * "arc" and "base" have live walletIds configured (env.networks). Other
@@ -27,7 +28,10 @@ const LIVE_WALLET_BY_CHAIN: Partial<Record<DepositSourceChain, string>> = {
 function requireWalletId(chain: DepositSourceChain): string {
   const walletId = LIVE_WALLET_BY_CHAIN[chain];
   if (!walletId) {
-    throw new Error(`${chain[0].toUpperCase()}${chain.slice(1)} deposits aren't live yet — try Base for now.`);
+    const fallbackLabel = env.networks[env.defaultNetwork].label;
+    throw new Error(
+      `${chain[0].toUpperCase()}${chain.slice(1)} deposits aren't live yet — try ${fallbackLabel} for now.`,
+    );
   }
   return walletId;
 }
@@ -131,16 +135,6 @@ function mapTransaction(tx: BlockradarTransaction, ownAddress: string): Transact
   };
 }
 
-interface BlockradarVirtualAccount {
-  id: string;
-  accountNumber: string;
-  accountName: string;
-  bankName: string;
-  bankCode: string;
-  currency: string;
-  reference: string;
-}
-
 export const depositLiveAdapter: DepositService = {
   async getBalance(): Promise<Balance> {
     const walletId = requireWalletId(env.defaultNetwork);
@@ -192,45 +186,15 @@ export const depositLiveAdapter: DepositService = {
   },
 
   async createVirtualAccount(currency): Promise<VirtualAccount> {
-    // Deliberately pinned to Base, not env.defaultNetwork — confirmed via a
-    // live check that the Arc wallet has zero virtual accounts provisioned
-    // (an empty GET result) and creating one goes through the untested
-    // POST-create fallback below. Base already has a real, working USD
-    // virtual account, so bank-transfer deposits stay on Base until Arc's
-    // fiat corridor is actually provisioned and verified.
-    const walletId = requireWalletId("base");
-    const existing = await blockradarRequestV2<{ data: BlockradarVirtualAccount[] }>(
-      `/wallets/${walletId}/virtual-accounts`,
-    );
-    const match = existing.data.find((va) => va.currency === currency);
-    if (match) {
-      return {
-        id: match.id,
-        currency: "USD",
-        accountNumber: match.accountNumber,
-        bankName: match.bankName,
-        bankCode: match.bankCode,
-        reference: match.reference,
-        isActive: true,
-      };
-    }
-
-    // Fallback only — this account already has a USD virtual account
-    // provisioned, so this path is untested against the real API. A real
-    // failure here (e.g. missing compliance additionalData) surfaces as a
-    // thrown error rather than a silent retry loop.
-    const created = await blockradarRequestV2<{ data: BlockradarVirtualAccount }>(
-      `/wallets/${walletId}/virtual-accounts`,
-      { method: "POST", body: JSON.stringify({ currency }) },
-    );
-    return {
-      id: created.data.id,
-      currency: "USD",
-      accountNumber: created.data.accountNumber,
-      bankName: created.data.bankName,
-      bankCode: created.data.bankCode,
-      reference: created.data.reference,
-      isActive: true,
-    };
+    // Deliberately mocked, not a real API call — by explicit direction, bank
+    // transfer stays on dummy data even while the rest of Deposit is live.
+    // (It's also the more cautious choice: the real Base wallet's virtual
+    // account carries genuine bank details, and Arc — the default network —
+    // has zero virtual accounts provisioned, confirmed via a live check.)
+    // The real integration was verified working before this change: GET
+    // /v2/wallets/{id}/virtual-accounts and match by currency, with a
+    // POST-create fallback for a wallet with none yet — see git history if
+    // this needs to go live again.
+    return depositMockAdapter.createVirtualAccount(currency);
   },
 };
