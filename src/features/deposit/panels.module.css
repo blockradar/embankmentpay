@@ -175,3 +175,21 @@
   font-size: 13.5px;
   font-weight: 600;
 }
+
+.settlementFlag {
+  display: flex;
+  gap: var(--ep-space-2);
+  background: var(--ep-gold-soft);
+  border: 1px solid var(--ep-gold);
+  border-radius: var(--ep-radius-sm);
+  padding: var(--ep-space-3) var(--ep-space-4);
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ep-text-secondary);
+}
+
+.settlementFlag b {
+  color: var(--ep-gold-strong);
+  flex-shrink: 0;
+}

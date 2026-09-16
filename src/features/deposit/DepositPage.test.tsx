@@ -36,14 +36,33 @@ describe("DepositPage", () => {
     expect(screen.queryByText(/^\$\s*0/)).not.toBeInTheDocument();
   });
 
-  it("selecting stablecoin shows chain chips with Base selected and a deposit address", async () => {
+  it("shows Stablecoin before Bank transfer in the method list", () => {
+    renderDeposit();
+    const labels = screen.getAllByText(/^(Stablecoin|Bank transfer)$/).map((el) => el.textContent);
+    expect(labels).toEqual(["Stablecoin", "Bank transfer"]);
+  });
+
+  it("selecting stablecoin defaults to Arc, with no settlement flag and a deposit address", async () => {
     const user = userEvent.setup();
     renderDeposit();
     await user.click(screen.getByText("Stablecoin"));
 
     expect(screen.getByRole("button", { name: "Base" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Arc" })).toBeInTheDocument();
+    expect(await screen.findByText("QR · Arc deposit")).toBeInTheDocument();
+    expect(screen.queryByText(/settle into the equivalent stablecoin/i)).not.toBeInTheDocument();
     expect(await screen.findByText(/0x8F3a41C9b2E7d5A06fB19cD3e84a7F2b6C0d9E15/)).toBeInTheDocument();
+  });
+
+  it("switching to a non-Arc chain shows the settlement flag", async () => {
+    const user = userEvent.setup();
+    renderDeposit();
+    await user.click(screen.getByText("Stablecoin"));
+    await screen.findByText("QR · Arc deposit");
+
+    await user.click(screen.getByRole("button", { name: "Base" }));
+
+    expect(await screen.findByText(/deposits from base settle into the equivalent stablecoin on arc/i)).toBeInTheDocument();
   });
 
   it("completes the bank transfer flow and shows the credited balance", async () => {

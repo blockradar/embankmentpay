@@ -50,18 +50,18 @@ export function DepositPage() {
       <p className={styles.subtitle}>Everything you add settles as USDC.</p>
       <div className={styles.cardList}>
         <SelectableCard
+          icon={<CoinIcon />}
+          title="Stablecoin"
+          subtitle="USDC or USDT from Arc, Base, Ethereum, Polygon, Solana, Tron"
+          showChevron
+          onClick={() => setMethod("stablecoin")}
+        />
+        <SelectableCard
           icon={<BankIcon />}
           title="Bank transfer"
           subtitle="USD · usually within minutes"
           showChevron
           onClick={() => setMethod("bank")}
-        />
-        <SelectableCard
-          icon={<CoinIcon />}
-          title="Stablecoin"
-          subtitle="USDC or USDT from Ethereum, Base, Polygon, Solana, Tron"
-          showChevron
-          onClick={() => setMethod("stablecoin")}
         />
       </div>
     </FlowLayout>
