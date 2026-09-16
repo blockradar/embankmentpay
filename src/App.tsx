@@ -1,7 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AppShell } from "./features/shell/AppShell";
-import { ComingSoonPage } from "./features/shell/ComingSoonPage";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
+import { ActivityPage } from "./features/activity/ActivityPage";
 import { DepositPage } from "./features/deposit/DepositPage";
 import { WithdrawPage } from "./features/withdraw/WithdrawPage";
 import { SwapPage } from "./features/swap/SwapPage";
@@ -18,7 +18,7 @@ function App() {
           <Route path="earn" element={<EarnPage />} />
           <Route path="earn/add" element={<AddToEarnPage />} />
           <Route path="earn/withdraw" element={<MoveOutPage />} />
-          <Route path="activity" element={<ComingSoonPage title="Activity" />} />
+          <Route path="activity" element={<ActivityPage />} />
           <Route path="deposit" element={<DepositPage />} />
           <Route path="withdraw" element={<WithdrawPage />} />
           <Route path="swap" element={<SwapPage />} />

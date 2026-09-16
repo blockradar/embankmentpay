@@ -55,6 +55,15 @@ export const mockTransactions: Transaction[] = [
     timestampLabel: "Sep 8",
     occurredAt: "2026-09-08T00:00:00.000Z",
   },
+  {
+    id: "txn_6",
+    kind: "withdraw-sent",
+    title: "To Priya S.",
+    subtitle: "USDC on Arc",
+    amountUsd: -60.0,
+    timestampLabel: "Sep 6",
+    occurredAt: "2026-09-06T00:00:00.000Z",
+  },
 ];
 
 export const mockHoldings: OnChainAssetHolding[] = [

@@ -18,11 +18,11 @@ describe("DashboardPage", () => {
     expect(await screen.findByText("$12,480.32")).toBeInTheDocument();
   });
 
-  it("renders every mock transaction with correctly signed amount", async () => {
+  it("renders the 5 most recent mock transactions with correctly signed amounts", async () => {
     renderDashboard();
     const list = await screen.findByRole("list");
 
-    for (const txn of mockTransactions) {
+    for (const txn of mockTransactions.slice(0, 5)) {
       const row = within(list).getByText(txn.title).closest("li");
       expect(row).not.toBeNull();
       const expected =
