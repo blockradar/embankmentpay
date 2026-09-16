@@ -1,0 +1,22 @@
+.wrap {
+  flex-shrink: 0;
+  border-radius: var(--ep-radius-sm);
+  border: 1px solid var(--ep-border);
+  background: var(--ep-bg-raised);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: var(--ep-space-2);
+}
+
+.wrap svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.fallback {
+  font-size: 11px;
+  color: var(--ep-text-tertiary);
+}

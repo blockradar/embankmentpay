@@ -6,6 +6,7 @@ import { useAsync } from "../../lib/useAsync";
 import { StepHeader } from "../../components/StepHeader";
 import { FlowLayout } from "../../components/FlowLayout";
 import { CopyButton } from "../../components/CopyButton";
+import { QrCode } from "../../components/QrCode";
 import type { DepositSourceChain } from "../../api/types";
 import card from "../dashboard/Card.module.css";
 import styles from "./panels.module.css";
@@ -88,7 +89,7 @@ export function StablecoinPanel({
         ) : (
           <>
             <div className={styles.qrRow}>
-              <div className={styles.qr}>QR &middot; {chainLabel} deposit</div>
+              <QrCode value={address.address} size={120} />
               <div className={styles.addressCol}>
                 <div className={styles.address}>{address.address}</div>
                 <div className={styles.fieldActions}>

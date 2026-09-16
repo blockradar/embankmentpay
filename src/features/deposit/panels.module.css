@@ -40,28 +40,6 @@
   flex-wrap: wrap;
 }
 
-.qr {
-  width: 120px;
-  height: 120px;
-  flex-shrink: 0;
-  border-radius: var(--ep-radius-sm);
-  border: 1px solid var(--ep-border);
-  background: repeating-linear-gradient(
-    135deg,
-    var(--ep-bg-raised),
-    var(--ep-bg-raised) 6px,
-    var(--ep-bg-card-hover) 6px,
-    var(--ep-bg-card-hover) 12px
-  );
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  font-size: 11px;
-  color: var(--ep-text-tertiary);
-  padding: var(--ep-space-3);
-}
-
 .addressCol {
   flex: 1;
   min-width: 220px;

@@ -49,7 +49,6 @@ describe("DepositPage", () => {
 
     expect(screen.getByRole("button", { name: "Base" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Arc" })).toBeInTheDocument();
-    expect(await screen.findByText("QR · Arc deposit")).toBeInTheDocument();
     expect(screen.queryByText(/settle into the equivalent stablecoin/i)).not.toBeInTheDocument();
     expect(await screen.findByText(/0x8F3a41C9b2E7d5A06fB19cD3e84a7F2b6C0d9E15/)).toBeInTheDocument();
   });
@@ -58,7 +57,7 @@ describe("DepositPage", () => {
     const user = userEvent.setup();
     renderDeposit();
     await user.click(screen.getByText("Stablecoin"));
-    await screen.findByText("QR · Arc deposit");
+    await screen.findByText(/0x8F3a41C9b2E7d5A06fB19cD3e84a7F2b6C0d9E15/);
 
     await user.click(screen.getByRole("button", { name: "Base" }));
 
