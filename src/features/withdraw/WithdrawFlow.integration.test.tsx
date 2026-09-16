@@ -22,9 +22,8 @@ describe("Withdraw flow, end to end", () => {
     await user.click(within(balanceCard).getByRole("link", { name: /withdraw/i }));
 
     await screen.findByText("Available $9,280.32");
-    await user.click(screen.getByRole("button", { name: "Base" }));
-    await user.type(screen.getByLabelText("Destination address"), VALID_BASE_ADDRESS);
     await user.type(screen.getByLabelText("Amount in USD"), "100");
+    await user.type(screen.getByLabelText("Destination address"), VALID_BASE_ADDRESS);
     await user.click(screen.getByRole("button", { name: /continue/i }));
 
     await screen.findByText("Review withdrawal");
@@ -36,7 +35,7 @@ describe("Withdraw flow, end to end", () => {
     expect(await screen.findByText("$12,380.32")).toBeInTheDocument();
     expect(within(screen.getByLabelText("Total balance")).getByText("$9,180.32")).toBeInTheDocument();
 
-    const row = screen.getByText(/To 0x1234…7890 · Base/).closest("li") as HTMLElement;
+    const row = screen.getByText(/To 0x1234…7890 · Arc/).closest("li") as HTMLElement;
     expect(within(row).getByText("Sent")).toBeInTheDocument();
     expect(within(row).getByText("-$100.00")).toBeInTheDocument();
   });

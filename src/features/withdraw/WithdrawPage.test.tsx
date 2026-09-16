@@ -4,9 +4,8 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useAccountStore } from "../../api/adapters/mock/accountStore";
 import { WithdrawPage } from "./WithdrawPage";
-import styles from "./WithdrawPage.module.css";
 
-const VALID_BASE_ADDRESS = "0x1234567890123456789012345678901234567890";
+const VALID_ARC_ADDRESS = "arc-address-example-1234";
 
 function renderWithdraw() {
   return render(
@@ -23,15 +22,10 @@ async function renderReady() {
   return { user, ...utils };
 }
 
-/**
- * Selects Base explicitly (rather than relying on whatever the default
- * network happens to be) and types a valid Base address + amount, advancing
- * from Amount to Review.
- */
+/** Fills amount then address (matching the flow's order), advances to Review. */
 async function goToReview(user: ReturnType<typeof userEvent.setup>, amount = "100") {
-  await user.click(screen.getByRole("button", { name: "Base" }));
-  await user.type(screen.getByLabelText("Destination address"), VALID_BASE_ADDRESS);
   await user.type(screen.getByLabelText("Amount in USD"), amount);
+  await user.type(screen.getByLabelText("Destination address"), VALID_ARC_ADDRESS);
   await user.click(screen.getByRole("button", { name: /continue/i }));
   await screen.findByText("Review withdrawal");
 }
@@ -45,59 +39,57 @@ afterEach(() => {
 });
 
 describe("WithdrawPage — amount + destination step", () => {
-  it("defaults to Arc (the live settlement network) and shows a chain picker limited to Base and Arc", async () => {
+  it("has no chain picker — withdrawals are Arc-only", async () => {
     await renderReady();
-    expect(screen.getByRole("button", { name: "Arc" })).toHaveClass(styles.chipSelected);
-    expect(screen.getByRole("button", { name: "Base" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Ethereum" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Arc" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Base" })).not.toBeInTheDocument();
   });
 
-  it("accepts a non-EVM-looking address on the default Arc chain", async () => {
-    const { user } = await renderReady();
-    await user.type(screen.getByLabelText("Destination address"), "arc-address-example-1234");
-    await user.type(screen.getByLabelText("Amount in USD"), "50");
-    expect(screen.getByRole("button", { name: /continue/i })).toBeEnabled();
+  it("shows the amount field before the destination address field", async () => {
+    await renderReady();
+    const amountInput = screen.getByLabelText("Amount in USD");
+    const addressInput = screen.getByLabelText("Destination address");
+    expect(
+      amountInput.compareDocumentPosition(addressInput) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
-  it("disables submit until a valid amount is entered", async () => {
+  it("disables submit until a valid amount and address are entered", async () => {
     const { user } = await renderReady();
     const submit = screen.getByRole("button", { name: /continue/i });
     expect(submit).toBeDisabled();
 
-    await user.type(screen.getByLabelText("Destination address"), "arc-address-example-1234");
-    expect(submit).toBeDisabled(); // no amount yet
-
     await user.type(screen.getByLabelText("Amount in USD"), "50");
+    expect(submit).toBeDisabled(); // no address yet
+
+    await user.type(screen.getByLabelText("Destination address"), VALID_ARC_ADDRESS);
     expect(submit).toBeEnabled();
   });
 
-  it("switching to Base enforces strict EVM address validation", async () => {
+  it("shows an error for an address that's too short", async () => {
     const { user } = await renderReady();
-    await user.click(screen.getByRole("button", { name: "Base" }));
-
-    await user.type(screen.getByLabelText("Destination address"), "not-an-address");
-    expect(await screen.findByText(/enter a valid base address/i)).toBeInTheDocument();
+    await user.type(screen.getByLabelText("Destination address"), "short");
+    expect(await screen.findByText(/enter a valid arc address/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /continue/i })).toBeDisabled();
   });
 
   it("flags an over-balance amount", async () => {
     const { user } = await renderReady();
-    await user.click(screen.getByRole("button", { name: "Base" }));
-    await user.type(screen.getByLabelText("Destination address"), VALID_BASE_ADDRESS);
     await user.type(screen.getByLabelText("Amount in USD"), "999999");
+    await user.type(screen.getByLabelText("Destination address"), VALID_ARC_ADDRESS);
     expect(await screen.findByText("Exceeds available balance")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /continue/i })).toBeDisabled();
   });
 });
 
 describe("WithdrawPage — review step", () => {
-  it("advances to Review with the amount, truncated address, chain, fee, and no countdown", async () => {
+  it("advances to Review with the amount, truncated address, Arc, fee, and no countdown", async () => {
     const { user } = await renderReady();
     await goToReview(user);
 
     expect(screen.getByText("$100.00")).toBeInTheDocument();
-    expect(screen.getByText(/0x1234…7890/)).toBeInTheDocument();
-    expect(screen.getByText(/base/i)).toBeInTheDocument();
+    expect(screen.getByText(/arc-ad…1234/)).toBeInTheDocument();
+    expect(screen.getByText(/arc/i)).toBeInTheDocument();
     expect(screen.getByText(/network fee/i)).toBeInTheDocument();
     expect(screen.queryByText(/rate locked/i)).not.toBeInTheDocument();
     expect(screen.getByText(/can't be reversed/i)).toBeInTheDocument();
