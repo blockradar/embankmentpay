@@ -23,8 +23,13 @@ async function renderReady() {
   return { user, ...utils };
 }
 
-/** Types a valid address and amount, advances from Amount to Review. */
+/**
+ * Selects Base explicitly (rather than relying on whatever the default
+ * network happens to be) and types a valid Base address + amount, advancing
+ * from Amount to Review.
+ */
 async function goToReview(user: ReturnType<typeof userEvent.setup>, amount = "100") {
+  await user.click(screen.getByRole("button", { name: "Base" }));
   await user.type(screen.getByLabelText("Destination address"), VALID_BASE_ADDRESS);
   await user.type(screen.getByLabelText("Amount in USD"), amount);
   await user.click(screen.getByRole("button", { name: /continue/i }));
@@ -40,40 +45,48 @@ afterEach(() => {
 });
 
 describe("WithdrawPage — amount + destination step", () => {
-  it("defaults to Base and shows a chain picker limited to Base and Arc", async () => {
+  it("defaults to Arc (the live settlement network) and shows a chain picker limited to Base and Arc", async () => {
     await renderReady();
-    expect(screen.getByRole("button", { name: "Base" })).toHaveClass(styles.chipSelected);
-    expect(screen.getByRole("button", { name: "Arc" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Arc" })).toHaveClass(styles.chipSelected);
+    expect(screen.getByRole("button", { name: "Base" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Ethereum" })).not.toBeInTheDocument();
   });
 
-  it("disables submit until a valid address and amount are entered", async () => {
+  it("accepts a non-EVM-looking address on the default Arc chain", async () => {
+    const { user } = await renderReady();
+    await user.type(screen.getByLabelText("Destination address"), "arc-address-example-1234");
+    await user.type(screen.getByLabelText("Amount in USD"), "50");
+    expect(screen.getByRole("button", { name: /continue/i })).toBeEnabled();
+  });
+
+  it("disables submit until a valid amount is entered", async () => {
     const { user } = await renderReady();
     const submit = screen.getByRole("button", { name: /continue/i });
     expect(submit).toBeDisabled();
 
-    await user.type(screen.getByLabelText("Amount in USD"), "100");
-    expect(submit).toBeDisabled(); // no address yet
+    await user.type(screen.getByLabelText("Destination address"), "arc-address-example-1234");
+    expect(submit).toBeDisabled(); // no amount yet
+
+    await user.type(screen.getByLabelText("Amount in USD"), "50");
+    expect(submit).toBeEnabled();
+  });
+
+  it("switching to Base enforces strict EVM address validation", async () => {
+    const { user } = await renderReady();
+    await user.click(screen.getByRole("button", { name: "Base" }));
 
     await user.type(screen.getByLabelText("Destination address"), "not-an-address");
     expect(await screen.findByText(/enter a valid base address/i)).toBeInTheDocument();
-    expect(submit).toBeDisabled();
+    expect(screen.getByRole("button", { name: /continue/i })).toBeDisabled();
   });
 
   it("flags an over-balance amount", async () => {
     const { user } = await renderReady();
+    await user.click(screen.getByRole("button", { name: "Base" }));
     await user.type(screen.getByLabelText("Destination address"), VALID_BASE_ADDRESS);
     await user.type(screen.getByLabelText("Amount in USD"), "999999");
     expect(await screen.findByText("Exceeds available balance")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /continue/i })).toBeDisabled();
-  });
-
-  it("a valid Base address enables submit; switching to Arc accepts a non-EVM-looking address", async () => {
-    const { user } = await renderReady();
-    await user.click(screen.getByRole("button", { name: "Arc" }));
-    await user.type(screen.getByLabelText("Destination address"), "arc-address-example-1234");
-    await user.type(screen.getByLabelText("Amount in USD"), "50");
-    expect(screen.getByRole("button", { name: /continue/i })).toBeEnabled();
   });
 });
 

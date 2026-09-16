@@ -34,9 +34,6 @@ pass `-- --port 5183` to `npm run dev` to pin one).
    create/list-wallet endpoint. In the dashboard's Wallets section, create
    (or find an existing) master wallet per network you want to support, and
    copy its wallet ID into the matching `VITE_WALLET_ID_*` variable.
-   - Currently only a Base wallet is expected to exist; `VITE_WALLET_ID_ARC`
-     can stay blank until Blockradar provisions an Arc wallet for this
-     account.
 4. Never commit `.env.local` — it's gitignored. Only `.env.example` (no real
    values) is tracked in git.
 
@@ -100,8 +97,14 @@ src/
 
 ## Current integration status
 
-- **Deposit** — live (address generation, balance, transaction history, bank transfer via virtual account)
+- **Deposit** — live. Arc and Base both have live wallets and are the default/secondary
+  settlement networks (`VITE_DEFAULT_NETWORK=arc`); stablecoin deposit
+  address generation works on both. Bank transfer (virtual account) is
+  deliberately pinned to Base regardless of the default network — Arc has
+  no virtual account provisioned yet, so bank-transfer deposits stay on
+  Base until that's set up and verified.
 - **Withdraw, Swap, Earn** — mock data, live integration in progress
 
-Only the Base network has a live wallet configured; other chains/networks
-show a clear "not available yet" message rather than failing silently.
+Other chains/networks (Ethereum, Polygon, Solana, Tron) have no live wallet
+configured and show a clear "not available yet" message rather than failing
+silently.

@@ -21,12 +21,10 @@ const CHAINS: { id: DepositSourceChain; label: string }[] = [
 
 const ARC_LABEL = CHAINS.find((c) => c.id === "arc")!.label;
 
-// Arc is the intended settlement network for stablecoin deposits, but it
-// has no live wallet provisioned yet on this Blockradar account. Default to
-// Arc in mock mode to match that product direction; default to Base in
-// live mode so the panel doesn't open straight into a "not live yet" error
-// (only Base has a live wallet configured — see deposit.live.ts).
-const DEFAULT_CHAIN: DepositSourceChain = env.apiModes.deposit === "live" ? "base" : "arc";
+// Arc is the intended settlement network for stablecoin deposits, and now
+// has a live wallet provisioned (see deposit.live.ts) — env.defaultNetwork
+// drives this consistently in both mock and live mode.
+const DEFAULT_CHAIN: DepositSourceChain = env.defaultNetwork;
 
 const SIMULATED_AMOUNT_USDC = 500;
 

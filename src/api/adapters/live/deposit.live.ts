@@ -11,15 +11,16 @@ import { blockradarRequest, blockradarRequestV2 } from "../../client";
 import { env } from "../../../config/env";
 
 /**
- * Only "base" has a live walletId configured (env.networks.base). Other
- * DepositSourceChain values (arc, ethereum, polygon, solana, tron) each
- * have their own real Blockradar wallet on this account, but wiring those
- * up is out of scope for this phase — env.networks only models the two
- * settlement networks (arc|base), not every source chain a deposit can
- * bridge from. Expanding live support to another chain means adding its
- * walletId to env.networks and extending this map, not guessing here.
+ * "arc" and "base" have live walletIds configured (env.networks). Other
+ * DepositSourceChain values (ethereum, polygon, solana, tron) each have
+ * their own real Blockradar wallet on this account, but wiring those up is
+ * out of scope for now — env.networks only models the two settlement
+ * networks (arc|base), not every source chain a deposit can bridge from.
+ * Expanding live support to another chain means adding its walletId to
+ * env.networks and extending this map, not guessing here.
  */
 const LIVE_WALLET_BY_CHAIN: Partial<Record<DepositSourceChain, string>> = {
+  arc: env.networks.arc.walletId || undefined,
   base: env.networks.base.walletId || undefined,
 };
 
@@ -142,7 +143,7 @@ interface BlockradarVirtualAccount {
 
 export const depositLiveAdapter: DepositService = {
   async getBalance(): Promise<Balance> {
-    const walletId = requireWalletId("base");
+    const walletId = requireWalletId(env.defaultNetwork);
     const assetId = await getUsdcAssetId(walletId);
     const res = await blockradarRequest<{
       data: { balance: string; convertedBalance: string };
@@ -158,13 +159,13 @@ export const depositLiveAdapter: DepositService = {
       // to Earn's own live adapter, not guessed at here.
       inEarnUsd: 0,
       todayDeltaUsd: 0,
-      network: "base",
+      network: env.defaultNetwork,
       asset: "USDC",
     };
   },
 
   async getRecentTransactions(limit = 5): Promise<Transaction[]> {
-    const walletId = requireWalletId("base");
+    const walletId = requireWalletId(env.defaultNetwork);
     const [details, res] = await Promise.all([
       getWalletDetails(walletId),
       blockradarRequest<{ data: BlockradarTransaction[] }>(
@@ -191,6 +192,12 @@ export const depositLiveAdapter: DepositService = {
   },
 
   async createVirtualAccount(currency): Promise<VirtualAccount> {
+    // Deliberately pinned to Base, not env.defaultNetwork — confirmed via a
+    // live check that the Arc wallet has zero virtual accounts provisioned
+    // (an empty GET result) and creating one goes through the untested
+    // POST-create fallback below. Base already has a real, working USD
+    // virtual account, so bank-transfer deposits stay on Base until Arc's
+    // fiat corridor is actually provisioned and verified.
     const walletId = requireWalletId("base");
     const existing = await blockradarRequestV2<{ data: BlockradarVirtualAccount[] }>(
       `/wallets/${walletId}/virtual-accounts`,

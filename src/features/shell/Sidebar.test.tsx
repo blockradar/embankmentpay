@@ -23,6 +23,6 @@ describe("Sidebar", () => {
       </MemoryRouter>,
     );
     expect(screen.getByText("Ana Ramos")).toBeInTheDocument();
-    expect(screen.getByText("Base network")).toBeInTheDocument();
+    expect(screen.getByText("Arc network")).toBeInTheDocument();
   });
 });

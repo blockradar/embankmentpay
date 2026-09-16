@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { env } from "../../config/env";
 import styles from "./Sidebar.module.css";
 import {
   ActivityIcon,
@@ -57,7 +58,7 @@ export function Sidebar() {
           <div className={styles.profileName}>Ana Ramos</div>
           <div className={styles.profileMeta}>
             <span className={styles.dot} />
-            Base network
+            {env.networks[env.defaultNetwork].label} network
           </div>
         </div>
       </div>
