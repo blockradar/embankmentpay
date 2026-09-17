@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { api } from "../../api";
 import { useAsync } from "../../lib/useAsync";
+import { DEFAULT_NETWORK } from "../../config/networks";
 import styles from "./DashboardPage.module.css";
 import { BalanceCard } from "./BalanceCard";
 import { TransactionList } from "./TransactionList";
@@ -8,8 +9,8 @@ import { TransactionList } from "./TransactionList";
 const STAGGER_MS = 70;
 
 export function DashboardPage() {
-  const balanceState = useAsync(() => api.deposit.getBalance(), []);
-  const transactionsState = useAsync(() => api.deposit.getRecentTransactions(5), []);
+  const balanceState = useAsync(() => api.account.getBalance(DEFAULT_NETWORK), []);
+  const transactionsState = useAsync(() => api.account.getRecentTransactions(DEFAULT_NETWORK, 5), []);
 
   const ready = balanceState.data && transactionsState.data;
 

@@ -1,6 +1,8 @@
 /**
- * Types mirror confirmed Blockradar response shapes (see docs.blockradar.co)
- * so screens can render API data without caring how it was fetched.
+ * Shapes shared by the server (which produces them) and the React app
+ * (which renders them). These are OUR app's types, not Blockradar's raw
+ * responses — server/blockradar.ts maps one into the other, so the
+ * frontend never depends on Blockradar's API shape directly.
  */
 
 /** The networks this app has a Blockradar mainnet master wallet for. */
@@ -25,7 +27,7 @@ export interface Transaction {
   occurredAt: string; // ISO
 }
 
-/** Blockradar "Address" — dedicated child deposit address under a master wallet. */
+/** A dedicated deposit address (a Blockradar child address under a master wallet). */
 export interface DepositAddress {
   id: string;
   address: string;
@@ -33,19 +35,11 @@ export interface DepositAddress {
   asset: "USDC";
 }
 
-/**
- * Blockradar POST /wallets/{id}/withdraw/network-fee response (partial —
- * only the fields this app displays). Confirmed field names verbatim.
- */
 export interface CryptoWithdrawFee {
   networkFeeUsd: number;
   estimatedArrivalSeconds: number;
 }
 
-/**
- * Blockradar POST /wallets/{id}/withdraw response (partial). A same-chain
- * on-chain send.
- */
 export interface CryptoWithdrawResult {
   id: string;
   hash: string;

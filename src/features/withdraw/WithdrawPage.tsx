@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api } from "../../api";
 import { useAsync } from "../../lib/useAsync";
+import { DEFAULT_NETWORK } from "../../config/networks";
 import { StepHeader } from "../../components/StepHeader";
 import { FlowLayout } from "../../components/FlowLayout";
 import { FlowComplete } from "../../components/FlowComplete";
@@ -10,7 +11,7 @@ import { WithdrawReview } from "./WithdrawReview";
 import card from "../dashboard/Card.module.css";
 import styles from "./WithdrawPage.module.css";
 
-const NETWORK: SettlementNetwork = "arc";
+const NETWORK: SettlementNetwork = DEFAULT_NETWORK;
 
 // Arc's exact address format isn't confirmed from the docs available to us —
 // a lenient non-empty/length check stands in until live integration
@@ -41,7 +42,7 @@ type Step =
  */
 export function WithdrawPage() {
   const [step, setStep] = useState<Step>({ kind: "amount" });
-  const { data: balance } = useAsync(() => api.deposit.getBalance(), []);
+  const { data: balance } = useAsync(() => api.account.getBalance(NETWORK), []);
   const [address, setAddress] = useState("");
   const [amount, setAmount] = useState(0);
   const [requestingFee, setRequestingFee] = useState(false);
@@ -93,7 +94,7 @@ export function WithdrawPage() {
             address: step.address,
             amountUsd: step.amount,
           });
-          const nextBalance = await api.deposit.getBalance();
+          const nextBalance = await api.account.getBalance(NETWORK);
           setStep({
             kind: "complete",
             address: step.address,

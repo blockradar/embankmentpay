@@ -1,25 +1,22 @@
-import { env } from "../config/env";
-
-/** Single fetch wrapper for every Blockradar call. */
-async function request<T>(baseUrl: string, path: string, init: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${baseUrl}${path}`, {
-    ...init,
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": env.blockradarApiKey,
-      ...init.headers,
-    },
+/**
+ * The browser only ever talks to OUR server (/api/*), never to Blockradar
+ * directly. There is no API key anywhere in the frontend — in dev, Vite
+ * proxies /api to the server (see vite.config.ts).
+ */
+export async function apiRequest<T>(
+  path: string,
+  options: { method?: "GET" | "POST"; body?: unknown } = {},
+): Promise<T> {
+  const res = await fetch(`/api${path}`, {
+    method: options.method ?? "GET",
+    headers: { "content-type": "application/json" },
+    body: options.body === undefined ? undefined : JSON.stringify(options.body),
   });
 
+  const json = await res.json().catch(() => null);
   if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Blockradar ${init.method ?? "GET"} ${path} failed: ${res.status} ${body}`);
+    // The server only ever sends a user-safe `error` message (server/errors.ts).
+    throw new Error(json?.error ?? `Request failed (${res.status})`);
   }
-
-  return res.json() as Promise<T>;
-}
-
-/** Blockradar v1 endpoints — wallets, addresses, balances, transactions, withdrawals. */
-export function blockradarRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
-  return request<T>(env.blockradarBaseUrl, path, init);
+  return json as T;
 }

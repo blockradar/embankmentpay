@@ -2,11 +2,10 @@ import { useState } from "react";
 import { StepHeader } from "../../components/StepHeader";
 import { FlowLayout } from "../../components/FlowLayout";
 import { formatUsd, truncateAddress } from "../../lib/format";
+import { NETWORK_LABELS } from "../../config/networks";
 import type { CryptoWithdrawFee, SettlementNetwork } from "../../api/types";
 import card from "../dashboard/Card.module.css";
 import styles from "./WithdrawPage.module.css";
-
-const NETWORK_LABEL: Record<SettlementNetwork, string> = { base: "Base", arc: "Arc" };
 
 function formatArrival(seconds: number): string {
   if (seconds < 60) return `~${seconds}s`;
@@ -53,7 +52,7 @@ export function WithdrawReview({
         <div className={styles.reviewAmountLabel}>Withdraw</div>
         <div className={`${styles.reviewAmount} ep-serif`}>{formatUsd(amount)}</div>
         <div className={styles.reviewSub}>
-          to {truncateAddress(address)} &middot; {NETWORK_LABEL[network]}
+          to {truncateAddress(address)} &middot; {NETWORK_LABELS[network]}
         </div>
 
         <div className={styles.rows}>

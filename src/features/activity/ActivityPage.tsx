@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api } from "../../api";
 import { useAsync } from "../../lib/useAsync";
+import { DEFAULT_NETWORK } from "../../config/networks";
 import { TransactionGlyph } from "../dashboard/transactionIcons";
 import { formatSigned, formatUsd } from "../../lib/format";
 import type { Transaction } from "../../api/types";
@@ -21,8 +22,8 @@ function matchesFilter(txn: Transaction, filter: Filter): boolean {
 }
 
 export function ActivityPage() {
-  const balanceState = useAsync(() => api.deposit.getBalance(), []);
-  const transactionsState = useAsync(() => api.deposit.getRecentTransactions(50), []);
+  const balanceState = useAsync(() => api.account.getBalance(DEFAULT_NETWORK), []);
+  const transactionsState = useAsync(() => api.account.getRecentTransactions(DEFAULT_NETWORK, 50), []);
   const [filter, setFilter] = useState<Filter>("all");
 
   const error = balanceState.error ?? transactionsState.error;

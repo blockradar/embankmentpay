@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { api } from "../../api";
-import { env } from "../../config/env";
+import { DEFAULT_NETWORK, NETWORK_LABELS } from "../../config/networks";
 import { useAsync } from "../../lib/useAsync";
 import { StepHeader } from "../../components/StepHeader";
 import { FlowLayout } from "../../components/FlowLayout";
@@ -18,13 +18,13 @@ const CHAINS: SettlementNetwork[] = ["arc", "base"];
  * there's no amount entry or review step here.
  */
 export function DepositPage() {
-  const [chain, setChain] = useState<SettlementNetwork>(env.defaultNetwork);
+  const [chain, setChain] = useState<SettlementNetwork>(DEFAULT_NETWORK);
   const { data: address, loading, error } = useAsync(
-    () => api.deposit.createStablecoinAddress(chain),
+    () => api.deposit.createAddress(chain),
     [chain],
   );
 
-  const chainLabel = env.networks[chain].label;
+  const chainLabel = NETWORK_LABELS[chain];
 
   return (
     <FlowLayout>
@@ -38,7 +38,7 @@ export function DepositPage() {
               className={`${styles.chip} ${chain === id ? styles.chipSelected : ""}`}
               onClick={() => setChain(id)}
             >
-              {env.networks[id].label}
+              {NETWORK_LABELS[id]}
             </button>
           ))}
         </div>
