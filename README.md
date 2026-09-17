@@ -77,13 +77,14 @@ npm run webhook:test -- --tamper   # body edited after signing → 401
 **With real deposits** — expose the server and point the wallet at it:
 
 ```bash
-ngrok http 3001
+npm run tunnel   # ngrok, exposing ONLY POST /webhooks/blockradar (ngrok-webhook-only.yml)
 # then set https://<your-id>.ngrok-free.app/webhooks/blockradar as the
 # webhook URL on the dashboard's Developers page (where your API key is)
 ```
 
-⚠️ ngrok exposes the whole API, and `server/auth.ts` is a placeholder — run
-the tunnel only while testing.
+⚠️ Never tunnel the whole server: `server/auth.ts` is a placeholder and
+`/api` can move money. `npm run tunnel` uses a traffic policy that returns
+404 for everything except the webhook.
 
 ## Environment variables
 
@@ -95,6 +96,7 @@ All read by the API server only (`server/config.ts`).
 | `BLOCKRADAR_WALLET_ID_ARC` | Arc mainnet master wallet ID. Required. |
 | `BLOCKRADAR_WALLET_ID_BASE` | Base mainnet master wallet ID. Optional. |
 | `BLOCKRADAR_BASE_URL` | Defaults to `https://api.blockradar.co/v1`. |
+| `MAX_WITHDRAW_USDC` | Mainnet guardrail: max USDC per withdrawal, default `5`. |
 | `PORT` | API server port, default `3001`. |
 
 ## Scripts
@@ -123,6 +125,8 @@ server/
   routes/deposit.ts  # one gasless deposit address per user, and credited deposits
   routes/webhooks.ts # POST /webhooks/blockradar — verify, dedupe, credit
   routes/account.ts  # GET /api/me/:network/{balance,transactions} — that address's money
+  routes/withdraw.ts # quote (gas in USDC) → send (idempotent, capped) → status from webhook
+  money.ts           # amounts as decimal strings, compared in micro-units
   index.ts           # Express app
 scripts/
   send-test-webhook.ts # signed fake deposit webhook for demos

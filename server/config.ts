@@ -58,6 +58,12 @@ export const config = {
   },
 
   /**
+   * Mainnet guardrail: the most USDC one withdrawal may send. Real money —
+   * cap it while you're testing, raise it deliberately.
+   */
+  maxWithdrawUsdc: process.env.MAX_WITHDRAW_USDC ?? "5",
+
+  /**
    * One Blockradar master wallet per network. Arc is required (it's the
    * point of the workshop); Base is optional and only used for contrast.
    */

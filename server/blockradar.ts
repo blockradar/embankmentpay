@@ -57,6 +57,10 @@ export interface BlockradarWebhookEvent {
     /** The child address involved; null for transactions on the master wallet itself. */
     address: { id: string; address: string } | null;
     wallet: { id: string };
+    /** Total gas YOUR wallets paid, in the chain's gas token — "USDC" on Arc. */
+    networkFee?: { amount: string; symbol: string; amountUsd: string | null } | null;
+    /** Each fee behind that total, and who paid it (feeSource: MASTER_WALLET, ADDRESS, ...). */
+    networkFees?: { operation: string; feeSource: string; feeNative: string; txHash: string }[];
   };
 }
 
@@ -74,17 +78,23 @@ export class BlockradarError extends Error {
 }
 
 async function request<T>(path: string, options: { method?: "GET" | "POST"; body?: unknown } = {}): Promise<T> {
-  const res = await fetch(`${config.blockradar.baseUrl}${path}`, {
-    method: options.method ?? "GET",
-    headers: {
-      "content-type": "application/json",
-      // Authenticates as your business. This header must never leave the server.
-      "x-api-key": config.blockradar.apiKey,
-    },
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
-    // Don't let a slow upstream hang our request forever.
-    signal: AbortSignal.timeout(15_000),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${config.blockradar.baseUrl}${path}`, {
+      method: options.method ?? "GET",
+      headers: {
+        "content-type": "application/json",
+        // Authenticates as your business. This header must never leave the server.
+        "x-api-key": config.blockradar.apiKey,
+      },
+      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      // Don't let a slow upstream hang our request forever.
+      signal: AbortSignal.timeout(15_000),
+    });
+  } catch (err) {
+    // Network down, DNS failure, or timeout — we never got a response.
+    throw new BlockradarError(503, `Could not reach Blockradar (${(err as Error).message})`);
+  }
 
   // Every Blockradar response is wrapped: { message, statusCode, data }.
   const json = (await res.json().catch(() => null)) as { message?: string; data?: T } | null;
@@ -131,5 +141,40 @@ export function getAddressBalance(walletId: string, addressId: string, assetId: 
 export function getAddressTransactions(walletId: string, addressId: string, limit: number) {
   return request<BlockradarTransaction[]>(
     `/wallets/${walletId}/addresses/${addressId}/transactions?limit=${limit}&order=DESC`,
+  );
+}
+
+/**
+ * POST /wallets/{walletId}/addresses/{addressId}/withdraw/network-fee —
+ * estimate gas for a withdrawal from a child address. Moves no funds.
+ * `networkFee` is in the chain's gas token (USDC on Arc); `nativeBalance` is
+ * the balance that will pay it — the master wallet's, when gasless is on.
+ */
+export function estimateAddressWithdrawFee(
+  walletId: string,
+  addressId: string,
+  body: { assetId: string; address: string; amount: string },
+) {
+  return request<{
+    networkFee: string;
+    networkFeeInUSD: string;
+    nativeBalance: string;
+    estimatedArrivalTime: number;
+  }>(`/wallets/${walletId}/addresses/${addressId}/withdraw/network-fee`, { method: "POST", body });
+}
+
+/**
+ * POST /wallets/{walletId}/addresses/{addressId}/withdraw — send from a
+ * child address. ⚠️ Moves real funds on mainnet. Returns while PENDING; the
+ * final result arrives as a withdraw.success / withdraw.failed webhook.
+ */
+export function withdrawFromAddress(
+  walletId: string,
+  addressId: string,
+  body: { assetId: string; address: string; amount: string; reference: string; metadata: Record<string, string> },
+) {
+  return request<{ id: string; hash: string | null; status: string }>(
+    `/wallets/${walletId}/addresses/${addressId}/withdraw`,
+    { method: "POST", body },
   );
 }

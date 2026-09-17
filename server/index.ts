@@ -11,6 +11,7 @@ import { errorHandler } from "./errors";
 import { accountRouter } from "./routes/account";
 import { depositRouter } from "./routes/deposit";
 import { webhooksRouter } from "./routes/webhooks";
+import { withdrawRouter } from "./routes/withdraw";
 import { loadWallets } from "./wallets";
 
 const app = express();
@@ -22,6 +23,7 @@ app.use(webhooksRouter);
 app.use(express.json());
 app.use("/api", accountRouter);
 app.use("/api", depositRouter);
+app.use("/api", withdrawRouter);
 
 // Must be registered after the routes it handles errors for.
 app.use(errorHandler);

@@ -64,6 +64,11 @@ webhooksRouter.post(
       case "deposit.success":
         handleDepositSuccess(key, data);
         break;
+      case "withdraw.success":
+      case "withdraw.failed":
+      case "withdraw.cancelled":
+        handleWithdrawUpdate(key, data);
+        break;
       default:
         console.log(`[webhook] ${key} (no handler for ${event})`);
         store.markWebhookProcessed(key);
@@ -102,4 +107,30 @@ function handleDepositSuccess(key: string, data: BlockradarWebhookEvent["data"])
     creditedAt: new Date().toISOString(),
   });
   console.log(`[webhook] credited ${data.amount} ${data.asset?.symbol} to ${owner.userId} (${key})`);
+}
+
+/**
+ * The final word on a withdrawal. On success, `networkFee` is the proof of
+ * the Arc hook: the gas was paid in USDC, and `networkFees[].feeSource`
+ * shows who paid it — MASTER_WALLET when gasless is on.
+ */
+function handleWithdrawUpdate(key: string, data: BlockradarWebhookEvent["data"]) {
+  const status = data.status === "SUCCESS" ? "SUCCESS" : data.status === "CANCELLED" ? "CANCELLED" : "FAILED";
+  const networkFee = data.networkFee
+    ? {
+        amount: data.networkFee.amount,
+        symbol: data.networkFee.symbol,
+        amountUsd: data.networkFee.amountUsd,
+        paidBy: [...new Set((data.networkFees ?? []).map((f) => f.feeSource))],
+      }
+    : null;
+
+  const withdrawal = store.updateWithdrawalFromWebhook(key, data.id, { status, hash: data.hash, networkFee });
+  if (!withdrawal) {
+    // e.g. a withdrawal made from the dashboard, not through this app.
+    console.log(`[webhook] ${key}: not a withdrawal this app sent, recorded only`);
+    return;
+  }
+  const fee = networkFee ? `gas ${networkFee.amount} ${networkFee.symbol} paid by ${networkFee.paidBy.join(", ")}` : "no fee info";
+  console.log(`[webhook] withdrawal ${data.id} → ${status} (${fee})`);
 }

@@ -24,7 +24,8 @@ export function AmountInput({
   error,
   autoFocus = true,
 }: {
-  onAmountChange: (amount: number) => void;
+  /** `text` is exactly what was typed — send that to the server, not the float. */
+  onAmountChange: (amount: number, text: string) => void;
   available: number;
   unitLabel?: string;
   error?: string;
@@ -35,7 +36,7 @@ export function AmountInput({
   function commit(nextRaw: string) {
     setRaw(nextRaw);
     const parsed = Number.parseFloat(nextRaw);
-    onAmountChange(Number.isFinite(parsed) ? parsed : 0);
+    onAmountChange(Number.isFinite(parsed) ? parsed : 0, nextRaw);
   }
 
   function handleInput(event: ChangeEvent<HTMLInputElement>) {

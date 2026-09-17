@@ -8,6 +8,7 @@
     "dev:api": "tsx watch --env-file=.env server/index.ts",
     "dev:web": "vite",
     "webhook:test": "tsx --env-file=.env scripts/send-test-webhook.ts",
+    "tunnel": "ngrok http 3001 --traffic-policy-file ngrok-webhook-only.yml",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",

@@ -6,7 +6,7 @@
  * more than one server instance.
  */
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import type { SettlementNetwork } from "../shared/types";
+import type { SettlementNetwork, Withdrawal } from "../shared/types";
 
 export interface StoredAddress {
   /** Blockradar's address id — used in every address-level API call. */
@@ -28,6 +28,13 @@ export interface StoredDeposit {
   creditedAt: string;
 }
 
+export interface StoredWithdrawal extends Withdrawal {
+  userId: string;
+  network: SettlementNetwork;
+  /** The client's idempotency key — the same key never sends twice. */
+  idempotencyKey: string;
+}
+
 interface Db {
   /** userId → network → that user's one deposit address on that network. */
   depositAddresses: Record<string, Partial<Record<SettlementNetwork, StoredAddress>>>;
@@ -35,12 +42,13 @@ interface Db {
   deposits: StoredDeposit[];
   /** "event:transactionId" for every webhook already handled — makes retries harmless. */
   processedWebhooks: string[];
+  withdrawals: StoredWithdrawal[];
 }
 
 const DB_PATH = "data/db.json";
 
 function load(): Db {
-  const empty: Db = { depositAddresses: {}, deposits: [], processedWebhooks: [] };
+  const empty: Db = { depositAddresses: {}, deposits: [], processedWebhooks: [], withdrawals: [] };
   if (!existsSync(DB_PATH)) return empty;
   return { ...empty, ...(JSON.parse(readFileSync(DB_PATH, "utf8")) as Partial<Db>) };
 }
@@ -76,6 +84,35 @@ export const store = {
     return load()
       .deposits.filter((d) => d.userId === userId && d.network === network)
       .reverse();
+  },
+
+  findWithdrawal(userId: string, match: { id?: string; idempotencyKey?: string }): StoredWithdrawal | undefined {
+    return load().withdrawals.find(
+      (w) =>
+        w.userId === userId &&
+        (match.id === undefined || w.id === match.id) &&
+        (match.idempotencyKey === undefined || w.idempotencyKey === match.idempotencyKey),
+    );
+  },
+
+  saveWithdrawal(withdrawal: StoredWithdrawal): void {
+    const db = load();
+    db.withdrawals.push(withdrawal);
+    save(db);
+  },
+
+  /** Applies a withdraw.* webhook and marks it processed in ONE write. */
+  updateWithdrawalFromWebhook(
+    key: string,
+    id: string,
+    patch: Pick<Withdrawal, "status" | "hash" | "networkFee">,
+  ): StoredWithdrawal | undefined {
+    const db = load();
+    const withdrawal = db.withdrawals.find((w) => w.id === id);
+    if (withdrawal) Object.assign(withdrawal, patch);
+    db.processedWebhooks.push(key);
+    save(db);
+    return withdrawal;
   },
 
   hasProcessedWebhook(key: string): boolean {

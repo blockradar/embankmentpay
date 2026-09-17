@@ -45,12 +45,27 @@ export interface CreditedDeposit {
   creditedAt: string;
 }
 
-export interface CryptoWithdrawFee {
-  networkFeeUsd: number;
+/** What a withdrawal will cost, shown on the review screen before sending. */
+export interface WithdrawQuote {
+  amount: string;
+  address: string;
+  /** Estimated gas, in `gasToken` units. */
+  networkFee: string;
+  networkFeeUsd: string;
+  /** The chain's gas token: "USDC" on Arc, "ETH" on Base. */
+  gasToken: string;
+  /** "platform" when gasless is on: the master wallet pays, not the user. */
+  gasPaidBy: "platform" | "user";
   estimatedArrivalSeconds: number;
 }
 
-export interface CryptoWithdrawResult {
+export interface Withdrawal {
   id: string;
-  hash: string;
+  status: "PENDING" | "SUCCESS" | "FAILED" | "CANCELLED";
+  amount: string;
+  address: string;
+  hash: string | null;
+  /** Filled in by the withdraw.success webhook: the gas actually paid, and by whom. */
+  networkFee: { amount: string; symbol: string; amountUsd: string | null; paidBy: string[] } | null;
+  createdAt: string;
 }

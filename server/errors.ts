@@ -23,6 +23,9 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
 
   if (err instanceof BlockradarError) {
     console.error(`[blockradar] ${err.status} ${err.message}`);
+    if (err.status === 401) {
+      console.error("[blockradar] hint: is this machine's current IP on the API key's allowlist?");
+    }
     // A 4xx from Blockradar is usually about the request ("Insufficient
     // balance") — its message helps the user. A 401/403 or 5xx means OUR
     // setup is broken; the user can't fix that, so don't leak the details.

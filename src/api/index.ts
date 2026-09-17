@@ -2,11 +2,11 @@ import { apiRequest } from "./client";
 import type {
   Balance,
   CreditedDeposit,
-  CryptoWithdrawFee,
-  CryptoWithdrawResult,
   DepositAddress,
   SettlementNetwork,
   Transaction,
+  Withdrawal,
+  WithdrawQuote,
 } from "./types";
 
 /**
@@ -31,16 +31,14 @@ export const api = {
   },
 
   withdraw: {
-    getCryptoWithdrawFee: (_params: {
-      network: SettlementNetwork;
-      address: string;
-      amountUsd: number;
-    }): Promise<CryptoWithdrawFee> => Promise.reject(new Error("Withdraw isn't wired up yet.")),
+    /** Validates and estimates gas. Moves no funds. */
+    getQuote: (network: SettlementNetwork, body: { address: string; amount: string }) =>
+      apiRequest<WithdrawQuote>(`/me/${network}/withdraw/quote`, { method: "POST", body }),
 
-    executeCryptoWithdraw: (_params: {
-      network: SettlementNetwork;
-      address: string;
-      amountUsd: number;
-    }): Promise<CryptoWithdrawResult> => Promise.reject(new Error("Withdraw isn't wired up yet.")),
+    /** ⚠️ Sends real funds. Reusing `idempotencyKey` returns the original withdrawal instead of sending again. */
+    send: (network: SettlementNetwork, body: { address: string; amount: string; idempotencyKey: string }) =>
+      apiRequest<Withdrawal>(`/me/${network}/withdrawals`, { method: "POST", body }),
+
+    get: (network: SettlementNetwork, id: string) => apiRequest<Withdrawal>(`/me/${network}/withdrawals/${id}`),
   },
 };
