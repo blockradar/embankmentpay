@@ -1,26 +1,23 @@
 import { Link } from "react-router-dom";
 import type { Balance } from "../../api/types";
-import { formatSigned, formatUsd } from "../../lib/format";
+import { formatUsdc } from "../../lib/format";
+import { NETWORK_LABELS } from "../../config/networks";
 import card from "./Card.module.css";
 import styles from "./BalanceCard.module.css";
-import { DownloadIcon, PlusIcon, SwapIcon } from "../shell/icons";
+import { DownloadIcon, PlusIcon } from "../shell/icons";
 
 export function BalanceCard({ balance }: { balance: Balance }) {
   return (
     <section className={card.card} aria-label="Total balance">
       <div className={styles.eyebrow}>
-        Total balance &middot; {balance.asset} on {balance.network === "base" ? "Base" : "Arc"}
+        Total balance &middot; {balance.asset} on {NETWORK_LABELS[balance.network]}
       </div>
-      <div className={styles.amount}>{formatUsd(balance.totalUsd)}</div>
+      <div className={styles.amount}>{formatUsdc(balance.available)} USDC</div>
 
       <div className={styles.stats}>
         <span>
-          Available <b>{formatUsd(balance.availableUsd)}</b>
+          Available <b>{formatUsdc(balance.available)} USDC</b>
         </span>
-        <span>
-          In Earn <b>{formatUsd(balance.inEarnUsd)}</b>
-        </span>
-        <span className={styles.positive}>{formatSigned(balance.todayDeltaUsd)} today</span>
       </div>
 
       <div className={styles.actions}>
@@ -29,9 +26,6 @@ export function BalanceCard({ balance }: { balance: Balance }) {
         </Link>
         <Link to="/withdraw" className={styles.secondary}>
           <DownloadIcon /> Withdraw
-        </Link>
-        <Link to="/swap" className={styles.secondary}>
-          <SwapIcon /> Swap
         </Link>
       </div>
     </section>

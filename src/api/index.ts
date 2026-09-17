@@ -1,23 +1,44 @@
-import { env } from "../config/env";
-import { depositMockAdapter } from "./adapters/mock/deposit.mock";
-import { earnMockAdapter } from "./adapters/mock/earn.mock";
-import { swapMockAdapter } from "./adapters/mock/swap.mock";
-import { withdrawMockAdapter } from "./adapters/mock/withdraw.mock";
-import { depositLiveAdapter } from "./adapters/live/deposit.live";
-import { earnLiveAdapter } from "./adapters/live/earn.live";
-import { swapLiveAdapter } from "./adapters/live/swap.live";
-import { withdrawLiveAdapter } from "./adapters/live/withdraw.live";
+import { apiRequest } from "./client";
+import type {
+  Balance,
+  CreditedDeposit,
+  DepositAddress,
+  SettlementNetwork,
+  Transaction,
+  Withdrawal,
+  WithdrawQuote,
+} from "./types";
 
 /**
- * The one place that knows about mock vs live. Every screen imports `api`
- * from here and calls `api.deposit.getBalance()` etc. — never a service
- * or adapter file directly. Each operation's mode is independent
- * (env.apiModes.<operation>), so flipping one operation to live never
- * touches the others.
+ * Every API call the screens make, in one place. Each one maps 1:1 to a
+ * route in server/routes/.
  */
 export const api = {
-  deposit: env.apiModes.deposit === "live" ? depositLiveAdapter : depositMockAdapter,
-  withdraw: env.apiModes.withdraw === "live" ? withdrawLiveAdapter : withdrawMockAdapter,
-  swap: env.apiModes.swap === "live" ? swapLiveAdapter : swapMockAdapter,
-  earn: env.apiModes.earn === "live" ? earnLiveAdapter : earnMockAdapter,
+  account: {
+    getBalance: (network: SettlementNetwork) => apiRequest<Balance>(`/me/${network}/balance`),
+
+    getRecentTransactions: (network: SettlementNetwork, limit = 5) =>
+      apiRequest<Transaction[]>(`/me/${network}/transactions?limit=${limit}`),
+  },
+
+  deposit: {
+    /** Returns the user's deposit address, creating it on first use. */
+    getAddress: (network: SettlementNetwork) =>
+      apiRequest<DepositAddress>(`/me/${network}/deposit-address`, { method: "POST" }),
+
+    /** Deposits the server's webhook has credited, newest first. */
+    listDeposits: (network: SettlementNetwork) => apiRequest<CreditedDeposit[]>(`/me/${network}/deposits`),
+  },
+
+  withdraw: {
+    /** Validates and estimates gas. Moves no funds. */
+    getQuote: (network: SettlementNetwork, body: { address: string; amount: string }) =>
+      apiRequest<WithdrawQuote>(`/me/${network}/withdraw/quote`, { method: "POST", body }),
+
+    /** ⚠️ Sends real funds. Reusing `idempotencyKey` returns the original withdrawal instead of sending again. */
+    send: (network: SettlementNetwork, body: { address: string; amount: string; idempotencyKey: string }) =>
+      apiRequest<Withdrawal>(`/me/${network}/withdrawals`, { method: "POST", body }),
+
+    get: (network: SettlementNetwork, id: string) => apiRequest<Withdrawal>(`/me/${network}/withdrawals/${id}`),
+  },
 };

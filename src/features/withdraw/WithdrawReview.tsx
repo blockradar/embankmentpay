@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { StepHeader } from "../../components/StepHeader";
 import { FlowLayout } from "../../components/FlowLayout";
-import { formatUsd, truncateAddress } from "../../lib/format";
-import type { CryptoWithdrawFee, SettlementNetwork } from "../../api/types";
+import { truncateAddress } from "../../lib/format";
+import { NETWORK_LABELS } from "../../config/networks";
+import type { SettlementNetwork, WithdrawQuote } from "../../api/types";
 import card from "../dashboard/Card.module.css";
 import styles from "./WithdrawPage.module.css";
-
-const NETWORK_LABEL: Record<SettlementNetwork, string> = { base: "Base", arc: "Arc" };
 
 function formatArrival(seconds: number): string {
   if (seconds < 60) return `~${seconds}s`;
@@ -14,24 +13,26 @@ function formatArrival(seconds: number): string {
   return `~${minutes} minute${minutes === 1 ? "" : "s"}`;
 }
 
+/** Up to 6 significant decimals: "0.0023670721183536" → "0.002367". */
+function formatFee(fee: string): string {
+  return Number(fee).toPrecision(4).replace(/\.?0+$/, "");
+}
+
 /**
- * Withdraw's one hard review step — a same-chain on-chain send is
- * irreversible once confirmed, unlike Deposit, so a pause is warranted.
- * Unlike fiat withdraw or swap, there's no rate-locked quote/session here
- * (just a point-in-time network-fee estimate), so no countdown.
+ * Withdraw's one hard review step — an on-chain send is irreversible once
+ * confirmed. Shows the Arc hook: gas is estimated in USDC and paid by the
+ * platform, not the user.
  */
 export function WithdrawReview({
   network,
-  address,
-  amount,
-  fee,
+  quote,
+  error,
   onBack,
   onConfirm,
 }: {
   network: SettlementNetwork;
-  address: string;
-  amount: number;
-  fee: CryptoWithdrawFee;
+  quote: WithdrawQuote;
+  error: string | null;
   onBack: () => void;
   onConfirm: () => Promise<void>;
 }) {
@@ -46,31 +47,45 @@ export function WithdrawReview({
     }
   }
 
+  const paidByPlatform = quote.gasPaidBy === "platform";
+
   return (
     <FlowLayout>
       <StepHeader title="Review withdrawal" onBack={onBack} />
       <div className={`${card.card} ${styles.reviewCard}`}>
         <div className={styles.reviewAmountLabel}>Withdraw</div>
-        <div className={`${styles.reviewAmount} ep-serif`}>{formatUsd(amount)}</div>
+        <div className={`${styles.reviewAmount} ep-serif`}>{quote.amount} USDC</div>
         <div className={styles.reviewSub}>
-          to {truncateAddress(address)} &middot; {NETWORK_LABEL[network]}
+          to {truncateAddress(quote.address)} &middot; {NETWORK_LABELS[network]}
         </div>
 
         <div className={styles.rows}>
           <div className={styles.row}>
-            <span>Network fee</span>
-            <span>{fee.networkFeeUsd > 0 ? formatUsd(fee.networkFeeUsd) : "Free"}</span>
+            <span>Network fee (gas)</span>
+            <span>
+              {formatFee(quote.networkFee)} {quote.gasToken}
+            </span>
+          </div>
+          <div className={styles.row}>
+            <span>Gas paid by</span>
+            <span>{paidByPlatform ? "Embankment Pay (you pay $0)" : "You"}</span>
+          </div>
+          <div className={styles.row}>
+            <span>You receive</span>
+            <span>{quote.amount} USDC</span>
           </div>
           <div className={styles.row}>
             <span>Arrives</span>
-            <span>{formatArrival(fee.estimatedArrivalSeconds)}</span>
+            <span>{formatArrival(quote.estimatedArrivalSeconds)}</span>
           </div>
         </div>
 
-        <p className={styles.note}>Sent directly on-chain — this can't be reversed once confirmed.</p>
+        <p className={error ? styles.addressError : styles.note}>
+          {error ?? "Sent directly on-chain — this can't be reversed once confirmed."}
+        </p>
 
         <button type="button" className={styles.submit} onClick={handleConfirm} disabled={confirming}>
-          {confirming ? "Confirming…" : "Confirm withdrawal"}
+          {confirming ? "Sending…" : "Confirm withdrawal"}
         </button>
       </div>
     </FlowLayout>

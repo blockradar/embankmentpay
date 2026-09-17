@@ -7,3 +7,6 @@ dist
 .env
 .env.*
 !.env.example
+
+# Local workshop database (server/store.ts)
+data/

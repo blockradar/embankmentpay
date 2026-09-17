@@ -1,42 +1,33 @@
 import { useState, type ChangeEvent } from "react";
 import { formatUsd } from "../lib/format";
-import { usdChips, type AmountChip } from "../lib/amountChips";
 import styles from "./AmountInput.module.css";
 
-const DEFAULT_CHIPS = usdChips([50, 100, 500]);
-const MAX_CHIP: AmountChip = { label: "Max", getValue: (available) => available };
-
-function roundTo(value: number, decimals: number): number {
-  const factor = 10 ** decimals;
-  return Math.round(value * factor) / factor;
+interface AmountChip {
+  label: string;
+  getValue: (available: number) => number;
 }
+
+const CHIPS: AmountChip[] = [
+  ...[50, 100, 500].map((value) => ({ label: `$${value}`, getValue: () => value })),
+  { label: "Max", getValue: (available) => available },
+];
 
 /**
  * Shared large-numeral amount entry: serif-italic prefix + input matching
  * the dashboard's typographic scale, an available-balance/error caption,
- * and quick-amount chips (+ Max, always appended). USD flows (Withdraw,
- * Earn's "Add to Earn") use the defaults; asset-denominated flows (Swap)
- * pass `prefix=""`, a `unitLabel` like "ETH", `percentChips(...)`, and a
- * `formatAvailable` for a non-dollar caption.
+ * and quick-amount chips.
  */
 export function AmountInput({
   onAmountChange,
   available,
   unitLabel = "USD",
-  prefix = "$",
-  chips = DEFAULT_CHIPS,
-  formatAvailable,
-  decimals = 2,
   error,
   autoFocus = true,
 }: {
-  onAmountChange: (amount: number) => void;
+  /** `text` is exactly what was typed — send that to the server, not the float. */
+  onAmountChange: (amount: number, text: string) => void;
   available: number;
   unitLabel?: string;
-  prefix?: string;
-  chips?: AmountChip[];
-  formatAvailable?: (value: number) => string;
-  decimals?: number;
   error?: string;
   autoFocus?: boolean;
 }) {
@@ -45,7 +36,7 @@ export function AmountInput({
   function commit(nextRaw: string) {
     setRaw(nextRaw);
     const parsed = Number.parseFloat(nextRaw);
-    onAmountChange(Number.isFinite(parsed) ? parsed : 0);
+    onAmountChange(Number.isFinite(parsed) ? parsed : 0, nextRaw);
   }
 
   function handleInput(event: ChangeEvent<HTMLInputElement>) {
@@ -59,16 +50,14 @@ export function AmountInput({
   }
 
   function handleChip(chip: AmountChip) {
-    const value = roundTo(chip.getValue(available), decimals);
+    const value = Math.round(chip.getValue(available) * 100) / 100;
     commit(String(value));
   }
-
-  const availableCaption = formatAvailable ? formatAvailable(available) : formatUsd(available);
 
   return (
     <div className={styles.wrap}>
       <div className={styles.inputRow}>
-        {prefix && <span className={styles.prefix}>{prefix}</span>}
+        <span className={styles.prefix}>$</span>
         <input
           className={styles.input}
           inputMode="decimal"
@@ -81,10 +70,10 @@ export function AmountInput({
         <span className={styles.currency}>{unitLabel}</span>
       </div>
       <div className={styles.meta}>
-        <span className={error ? styles.error : undefined}>{error ?? `Available ${availableCaption}`}</span>
+        <span className={error ? styles.error : undefined}>{error ?? `Available ${formatUsd(available)}`}</span>
       </div>
       <div className={styles.chips}>
-        {[...chips, MAX_CHIP].map((chip) => (
+        {CHIPS.map((chip) => (
           <button key={chip.label} type="button" className={styles.chip} onClick={() => handleChip(chip)}>
             {chip.label}
           </button>

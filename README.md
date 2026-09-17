@@ -1,110 +1,150 @@
 # Embankment Pay
 
-A stablecoin banking dashboard (Deposit, Withdraw, Swap, Earn) built on top of
-[Blockradar](https://blockradar.co)'s Wallet-as-a-Service API, settling in
-USDC on Base.
+A reference project for taking a stablecoin app from Arc testnet to **Arc
+mainnet** with [Blockradar](https://docs.blockradar.co): wallets, deposit
+addresses, deposit webhooks, and withdrawals where gas is paid in USDC.
+
+## How it fits together
+
+```
+Browser (React, src/)  ──/api/*──▶  API server (server/)  ──x-api-key──▶  Blockradar
+     no secrets                      holds the API key                    api.blockradar.co
+```
+
+The browser never talks to Blockradar directly. Anything in a `VITE_*`
+variable is compiled into the public JavaScript bundle, so an API key there
+is readable by anyone — the server exists to keep it out.
 
 ## Prerequisites
 
 - Node 20+
-- npm
-- A Blockradar API key (staging or production) — see [Getting your keys](#getting-your-keys) below
+- A Blockradar account with **Live Mode** enabled
+- A mainnet master wallet on Arc (and optionally Base), created in the dashboard
 
 ## Setup
 
 ```bash
-git clone https://github.com/blockradar/embankmentpay.git
-cd embankmentpay
 npm install
-cp .env.example .env.local   # then fill in the values, see below
-npm run dev
+cp .env.example .env   # then fill in the values, see below
+npm run dev            # starts the API server (:3001) and the web app (:5173)
 ```
 
-The app runs at `http://localhost:5173` (or whatever port Vite prints —
-pass `-- --port 5183` to `npm run dev` to pin one).
+On startup the API server checks every configured wallet against
+Blockradar and refuses to start if something is wrong:
+
+```
+✓ arc: "Arc Mainnet" 0xb1d9…f41f · mainnet · gas paid in USDC
+✓ base: "Base Mainnet" 0xb1d9…f41f · mainnet · gas paid in ETH
+API listening on http://localhost:3001
+```
 
 ## Getting your keys
 
-1. Log in to the [Blockradar dashboard](https://dashboard.blockradar.co) for
-   the environment you want to point at (staging or production have separate
-   base URLs and keys — see `.env.example`).
-2. Under your business's API settings, generate an API key. This goes in
-   `VITE_BLOCKRADAR_API_KEY`.
-3. Master wallets are **dashboard-only** — Blockradar's API has no
-   create/list-wallet endpoint. In the dashboard's Wallets section, create
-   (or find an existing) master wallet per network you want to support, and
-   copy its wallet ID into the matching `VITE_WALLET_ID_*` variable.
-4. Never commit `.env.local` — it's gitignored. Only `.env.example` (no real
-   values) is tracked in git.
+1. In the [Blockradar dashboard](https://dashboard.blockradar.co), switch to
+   **Live Mode**.
+2. Create a master wallet on Arc (and Base, if you want the comparison).
+   Master wallets are created in the dashboard — copy each wallet ID into
+   `BLOCKRADAR_WALLET_ID_ARC` / `BLOCKRADAR_WALLET_ID_BASE`.
+3. Generate an API key and put it in `BLOCKRADAR_API_KEY`. If you enable an
+   IP allowlist on the key, add your server's IP — requests from anywhere
+   else fail with `401 Unauthorized`, which looks exactly like a bad key.
 
-⚠️ **Even the "staging" API can hold real funds on real mainnet chains.**
-Wallets returned by the staging API in this project are tagged
-`"network": "mainnet"`, not testnet — reads (balances, addresses,
-transactions) are harmless, but anything that executes a real withdrawal or
-swap moves actual money. Treat staging credentials with the same care as
-production ones.
+## What changes from testnet to mainnet
+
+See the labelled block at the top of [`server/config.ts`](server/config.ts).
+In short: a Live Mode API key, new mainnet wallet IDs, and the expected
+network. The base URL, endpoints, and response shapes are the same.
+
+## Receiving webhooks
+
+Blockradar tells your server about deposits by POSTing to a webhook URL. The
+handler is `server/routes/webhooks.ts`; it verifies the signature, ignores
+duplicates and other environments, then credits the user who owns the address.
+
+⚠️ **Set the webhook URL on the same Developers page your API key came from.**
+Blockradar signs each webhook with the key from the page the URL is set on. A
+URL on a master wallet's own developer page is signed with that wallet's key,
+so with an account-level `BLOCKRADAR_API_KEY` every event fails with 401.
+
+**Without a real deposit** — send a signed test event to your local server:
+
+```bash
+npm run webhook:test               # valid event → deposit credited
+npm run webhook:test -- --twice    # same event twice → second is a duplicate
+npm run webhook:test -- --tamper   # body edited after signing → 401
+```
+
+**With real deposits** — expose the server and point the wallet at it:
+
+```bash
+npm run tunnel   # ngrok, exposing ONLY POST /webhooks/blockradar (ngrok-webhook-only.yml)
+# then set https://<your-id>.ngrok-free.app/webhooks/blockradar as the
+# webhook URL on the dashboard's Developers page (where your API key is)
+```
+
+⚠️ Never tunnel the whole server: `server/auth.ts` is a placeholder and
+`/api` can move money. `npm run tunnel` uses a traffic policy that returns
+404 for everything except the webhook.
+
+## Operating gasless withdrawals on Arc
+
+- **Keep the master wallet funded.** Gasless means the master wallet pays
+  gas, and Blockradar requires it to hold at least **3 USD of USDC** to do so.
+  Below that, withdrawals fail (the server logs it; users see "temporarily
+  unavailable").
+- **Gas funding looks like a deposit.** On Arc, gas *is* USDC: the master wallet
+  tops up the user's address with a little USDC before a gasless withdrawal,
+  and Blockradar reports it as `deposit.success`. The webhook handler skips
+  deposits sent by your own master wallet so they're never credited to users.
 
 ## Environment variables
 
-All variables live in `.env.local` (see `.env.example` for the template).
+All read by the API server only (`server/config.ts`).
 
 | Variable | Purpose |
 |---|---|
-| `VITE_API_MODE` | Default mode (`mock` or `live`) for any operation without its own override. |
-| `VITE_API_MODE_DEPOSIT` / `_WITHDRAW` / `_SWAP` / `_EARN` | Per-operation override — lets one operation run live while the others stay on mock data. Falls back to `VITE_API_MODE` if unset. |
-| `VITE_BLOCKRADAR_BASE_URL` | e.g. `https://staging-api.blockradar.co/v1` — v2 endpoints (virtual accounts) are called by swapping `/v1` for `/v2` internally, no separate config needed. |
-| `VITE_BLOCKRADAR_API_KEY` | Sent as the `x-api-key` header on every live request. |
-| `VITE_DEFAULT_NETWORK` | `arc` or `base` — which settlement network the Dashboard defaults to. |
-| `VITE_WALLET_ID_ARC` / `VITE_WALLET_ID_BASE` | The Blockradar master wallet ID per network (see step 3 above). Leave blank for a network you haven't provisioned — live calls for that network fail with a clear in-app error rather than crashing. |
-
-### Mock vs. live
-
-Every operation (`api.deposit`, `api.withdraw`, `api.swap`, `api.earn`) is
-resolved once, per-operation, in `src/api/index.ts`, based on
-`env.apiModes.<operation>`. Screens only ever call `api.<operation>.*` —
-never a mock or live adapter file directly — so flipping one operation to
-live is a one-line `.env.local` change, not a code change.
-
-Vitest always forces every operation to `mock` regardless of `.env.local`
-(see `vite.config.ts`), so `npm test` never makes real network calls.
+| `BLOCKRADAR_API_KEY` | Live Mode API key, sent as `x-api-key`. Also the webhook signing secret. |
+| `BLOCKRADAR_WALLET_ID_ARC` | Arc mainnet master wallet ID. Required. |
+| `BLOCKRADAR_WALLET_ID_BASE` | Base mainnet master wallet ID. Optional. |
+| `BLOCKRADAR_BASE_URL` | Defaults to `https://api.blockradar.co/v1`. |
+| `MAX_WITHDRAW_USDC` | Mainnet guardrail: max USDC per withdrawal, default `5`. |
+| `PORT` | API server port, default `3001`. |
 
 ## Scripts
 
 ```bash
-npm run dev       # start the dev server
-npm run build     # typecheck + production build
-npm test          # run the test suite (mock-only, no network calls)
+npm run dev       # API server + web app together
+npm run dev:api   # API server only (restarts on change)
+npm run dev:web   # web app only
+npm run webhook:test  # send a signed test deposit webhook to the local server
+npm run build     # typecheck (app + server) + production build of the web app
+npm test          # run the test suite
 npm run lint      # oxlint
-npm run preview   # preview a production build locally
 ```
 
 ## Project structure
 
 ```
+server/
+  config.ts          # env vars + "what changed from testnet → mainnet"
+  wallets.ts         # loads and verifies each master wallet at startup
+  blockradar.ts      # every Blockradar API call
+  auth.ts            # ⚠️ placeholder: who the current user is
+  store.ts           # ⚠️ tiny JSON-file database (data/db.json)
+  errors.ts          # what the browser is (and isn't) told when things fail
+  webhook-signature.ts # HMAC-SHA512 signature check (+ tests)
+  routes/deposit.ts  # one gasless deposit address per user, and credited deposits
+  routes/webhooks.ts # POST /webhooks/blockradar — verify, dedupe, credit
+  routes/account.ts  # GET /api/me/:network/{balance,transactions} — that address's money
+  routes/withdraw.ts # quote (gas in USDC) → send (idempotent, capped) → status from webhook
+  money.ts           # amounts as decimal strings, compared in micro-units
+  index.ts           # Express app
+scripts/
+  send-test-webhook.ts # signed fake deposit webhook for demos
+shared/types.ts      # data shapes shared by server and browser
 src/
-  config/env.ts              # all environment/endpoint config, per-operation mode resolution
-  api/
-    client.ts                 # fetch wrapper for live calls (v1 + v2)
-    types/                    # types mirroring confirmed Blockradar response shapes
-    operations/*.service.ts   # one interface per operation (deposit/withdraw/swap/earn)
-    adapters/mock/            # in-memory dummy data + a Zustand store for mock-mode state
-    adapters/live/            # real Blockradar calls
-    index.ts                  # the `api` facade — resolves mock vs. live per operation
-  components/                 # shared cross-flow UI (AmountInput, FlowComplete, StepHeader, ...)
-  features/                   # one folder per screen/flow (dashboard, deposit, withdraw, swap, earn, shell)
-  styles/theme.css             # design tokens (color, type, spacing, motion)
+  api/               # browser → /api calls (no secrets)
+  config/networks.ts # display-only network labels
+  components/        # shared UI (AmountInput, QrCode, CopyButton, ...)
+  features/          # one folder per screen (dashboard, deposit, withdraw, activity, shell)
 ```
-
-## Current integration status
-
-- **Deposit** — live. Arc and Base both have live wallets and are the default/secondary
-  settlement networks (`VITE_DEFAULT_NETWORK=arc`); stablecoin deposit
-  address generation works on both. Bank transfer (virtual account) is
-  deliberately pinned to Base regardless of the default network — Arc has
-  no virtual account provisioned yet, so bank-transfer deposits stay on
-  Base until that's set up and verified.
-- **Withdraw, Swap, Earn** — mock data, live integration in progress
-
-Other chains/networks (Ethereum, Polygon, Solana, Tron) have no live wallet
-configured and show a clear "not available yet" message rather than failing
-silently.

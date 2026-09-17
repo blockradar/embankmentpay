@@ -1,0 +1,12 @@
+# ngrok traffic policy: expose ONLY Blockradar's webhook through the tunnel.
+#
+# Everything else (the /api routes, which use placeholder auth and can move
+# money) is rejected by ngrok at the edge and never reaches your server.
+# Used by `npm run tunnel`.
+on_http_request:
+  - expressions:
+      - "!(req.method == 'POST' && req.url.path == '/webhooks/blockradar')"
+    actions:
+      - type: deny
+        config:
+          status_code: 404
