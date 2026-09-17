@@ -37,6 +37,29 @@ export interface BlockradarTransaction {
   asset: { symbol: string } | null;
 }
 
+/**
+ * The body Blockradar POSTs to your webhook URL. `data` is the transaction
+ * the event is about (partial — see docs.blockradar.co/en/utilities/webhooks).
+ */
+export interface BlockradarWebhookEvent {
+  /** "deposit.success", "withdraw.success", "withdraw.failed", ... */
+  event: string;
+  data: {
+    id: string;
+    type: string;
+    status: string;
+    /** Decimal string in asset units, e.g. "10.0". */
+    amount: string;
+    hash: string | null;
+    network: "mainnet" | "testnet";
+    recipientAddress: string | null;
+    asset: { symbol: string } | null;
+    /** The child address involved; null for transactions on the master wallet itself. */
+    address: { id: string; address: string } | null;
+    wallet: { id: string };
+  };
+}
+
 // ─── Transport ────────────────────────────────────────────────────────────
 
 /** Thrown for any non-2xx response. `message` is Blockradar's own error text. */

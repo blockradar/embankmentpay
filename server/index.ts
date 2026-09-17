@@ -10,11 +10,16 @@ import { config } from "./config";
 import { errorHandler } from "./errors";
 import { accountRouter } from "./routes/account";
 import { depositRouter } from "./routes/deposit";
+import { webhooksRouter } from "./routes/webhooks";
 import { loadWallets } from "./wallets";
 
 const app = express();
-app.use(express.json());
 
+// Webhooks first: they need the raw request body to verify the signature,
+// and express.json() below would consume it.
+app.use(webhooksRouter);
+
+app.use(express.json());
 app.use("/api", accountRouter);
 app.use("/api", depositRouter);
 

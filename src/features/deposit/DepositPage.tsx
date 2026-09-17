@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../../api";
 import { DEFAULT_NETWORK, NETWORK_LABELS } from "../../config/networks";
 import { useAsync } from "../../lib/useAsync";
@@ -6,7 +6,7 @@ import { StepHeader } from "../../components/StepHeader";
 import { FlowLayout } from "../../components/FlowLayout";
 import { CopyButton } from "../../components/CopyButton";
 import { QrCode } from "../../components/QrCode";
-import type { SettlementNetwork } from "../../api/types";
+import type { CreditedDeposit, SettlementNetwork } from "../../api/types";
 import card from "../dashboard/Card.module.css";
 import styles from "./DepositPage.module.css";
 
@@ -23,6 +23,7 @@ export function DepositPage() {
     () => api.deposit.getAddress(chain),
     [chain],
   );
+  const arrived = useNewDeposit(chain);
 
   const chainLabel = NETWORK_LABELS[chain];
 
@@ -59,6 +60,13 @@ export function DepositPage() {
               </div>
             </div>
 
+            {arrived && (
+              <p className={styles.received} role="status">
+                <b>✓</b> {arrived.amount} {arrived.asset} received
+                {arrived.id.startsWith("test-") ? " (test event)" : ""} — credited by the webhook.
+              </p>
+            )}
+
             <ol className={styles.instructions}>
               <li>
                 <b>1</b> Send USDC on {chainLabel} from any wallet or exchange.
@@ -73,4 +81,46 @@ export function DepositPage() {
       </div>
     </FlowLayout>
   );
+}
+
+/**
+ * Polls for deposits the webhook has credited and returns the newest one
+ * that arrived while this page was open. (A production app would push this
+ * to the browser over a websocket or server-sent events instead.)
+ */
+function useNewDeposit(network: SettlementNetwork): CreditedDeposit | null {
+  const [arrived, setArrived] = useState<{ network: SettlementNetwork; deposit: CreditedDeposit } | null>(null);
+
+  useEffect(() => {
+    let known: Set<string> | null = null;
+    let cancelled = false;
+
+    async function check() {
+      try {
+        const deposits = await api.deposit.listDeposits(network);
+        if (cancelled) return;
+        // First response: remember what was already there when the page opened.
+        if (!known) {
+          known = new Set(deposits.map((d) => d.id));
+          return;
+        }
+        const fresh = deposits.find((d) => !known!.has(d.id));
+        if (fresh) {
+          known.add(fresh.id);
+          setArrived({ network, deposit: fresh });
+        }
+      } catch {
+        // Keep polling — a missed tick is harmless.
+      }
+    }
+
+    check();
+    const timer = setInterval(check, 3000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [network]);
+
+  return arrived?.network === network ? arrived.deposit : null;
 }

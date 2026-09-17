@@ -103,3 +103,20 @@
   font-size: 13.5px;
   font-weight: 600;
 }
+
+.received {
+  display: flex;
+  gap: var(--ep-space-2);
+  margin: 0;
+  padding: var(--ep-space-3) var(--ep-space-4);
+  border: 1px solid var(--ep-green);
+  border-radius: var(--ep-radius-sm);
+  background: var(--ep-green-soft);
+  color: var(--ep-text-primary);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.received b {
+  color: var(--ep-green);
+}

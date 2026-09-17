@@ -35,6 +35,16 @@ export interface DepositAddress {
   asset: "USDC";
 }
 
+/** A deposit our webhook has credited to the user. */
+export interface CreditedDeposit {
+  id: string;
+  /** Decimal string, exactly as Blockradar reported it. */
+  amount: string;
+  asset: string;
+  hash: string | null;
+  creditedAt: string;
+}
+
 export interface CryptoWithdrawFee {
   networkFeeUsd: number;
   estimatedArrivalSeconds: number;

@@ -16,16 +16,33 @@ export interface StoredAddress {
   createdAt: string;
 }
 
+export interface StoredDeposit {
+  /** Blockradar's transaction id. */
+  transactionId: string;
+  userId: string;
+  network: SettlementNetwork;
+  /** Exactly as Blockradar sent it. Money stays a decimal string, never a float. */
+  amount: string;
+  asset: string;
+  hash: string | null;
+  creditedAt: string;
+}
+
 interface Db {
   /** userId → network → that user's one deposit address on that network. */
   depositAddresses: Record<string, Partial<Record<SettlementNetwork, StoredAddress>>>;
+  /** Deposits credited by the webhook, oldest first. */
+  deposits: StoredDeposit[];
+  /** "event:transactionId" for every webhook already handled — makes retries harmless. */
+  processedWebhooks: string[];
 }
 
 const DB_PATH = "data/db.json";
 
 function load(): Db {
-  if (!existsSync(DB_PATH)) return { depositAddresses: {} };
-  return JSON.parse(readFileSync(DB_PATH, "utf8")) as Db;
+  const empty: Db = { depositAddresses: {}, deposits: [], processedWebhooks: [] };
+  if (!existsSync(DB_PATH)) return empty;
+  return { ...empty, ...(JSON.parse(readFileSync(DB_PATH, "utf8")) as Partial<Db>) };
 }
 
 function save(db: Db): void {
@@ -43,6 +60,36 @@ export const store = {
   saveDepositAddress(userId: string, address: StoredAddress): void {
     const db = load();
     db.depositAddresses[userId] = { ...db.depositAddresses[userId], [address.network]: address };
+    save(db);
+  },
+
+  /** Which user owns a Blockradar address id? Used to credit incoming deposits. */
+  findDepositAddressById(addressId: string): { userId: string; address: StoredAddress } | undefined {
+    for (const [userId, byNetwork] of Object.entries(load().depositAddresses)) {
+      const address = Object.values(byNetwork).find((a) => a?.id === addressId);
+      if (address) return { userId, address };
+    }
+    return undefined;
+  },
+
+  listDeposits(userId: string, network: SettlementNetwork): StoredDeposit[] {
+    return load()
+      .deposits.filter((d) => d.userId === userId && d.network === network)
+      .reverse();
+  },
+
+  hasProcessedWebhook(key: string): boolean {
+    return load().processedWebhooks.includes(key);
+  },
+
+  /**
+   * Marks a webhook as handled — and, if it credited a deposit, records the
+   * deposit — in ONE write, so a crash can't leave one without the other.
+   */
+  markWebhookProcessed(key: string, deposit?: StoredDeposit): void {
+    const db = load();
+    db.processedWebhooks.push(key);
+    if (deposit) db.deposits.push(deposit);
     save(db);
   },
 };

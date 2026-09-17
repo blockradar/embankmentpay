@@ -1,5 +1,6 @@
 /**
  * POST /api/me/:network/deposit-address — the user's deposit address.
+ * GET  /api/me/:network/deposits        — deposits the webhook has credited.
  *
  * STEP 1 of the core flow: wallet → address.
  *   • The master wallet was created once, in the Blockradar dashboard.
@@ -7,7 +8,7 @@
  *     reused forever after. Deposits to it are credited to that user.
  */
 import { Router } from "express";
-import type { DepositAddress } from "../../shared/types";
+import type { CreditedDeposit, DepositAddress } from "../../shared/types";
 import { currentUserId } from "../auth";
 import * as blockradar from "../blockradar";
 import { store, type StoredAddress } from "../store";
@@ -26,6 +27,14 @@ depositRouter.post("/me/:network/deposit-address", async (req, res) => {
     asset: "USDC",
   };
   res.json(address);
+});
+
+depositRouter.get("/me/:network/deposits", (req, res) => {
+  const wallet = getWallet(req.params.network);
+  const deposits: CreditedDeposit[] = store
+    .listDeposits(currentUserId(req), wallet.network)
+    .map((d) => ({ id: d.transactionId, amount: d.amount, asset: d.asset, hash: d.hash, creditedAt: d.creditedAt }));
+  res.json(deposits);
 });
 
 /**

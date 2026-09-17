@@ -1,6 +1,7 @@
 import { apiRequest } from "./client";
 import type {
   Balance,
+  CreditedDeposit,
   CryptoWithdrawFee,
   CryptoWithdrawResult,
   DepositAddress,
@@ -24,6 +25,9 @@ export const api = {
     /** Returns the user's deposit address, creating it on first use. */
     getAddress: (network: SettlementNetwork) =>
       apiRequest<DepositAddress>(`/me/${network}/deposit-address`, { method: "POST" }),
+
+    /** Deposits the server's webhook has credited, newest first. */
+    listDeposits: (network: SettlementNetwork) => apiRequest<CreditedDeposit[]>(`/me/${network}/deposits`),
   },
 
   withdraw: {

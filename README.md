@@ -55,6 +55,32 @@ See the labelled block at the top of [`server/config.ts`](server/config.ts).
 In short: a Live Mode API key, new mainnet wallet IDs, and the expected
 network. The base URL, endpoints, and response shapes are the same.
 
+## Receiving webhooks
+
+Blockradar tells your server about deposits by POSTing to a webhook URL set
+on the master wallet (dashboard → wallet settings). The handler is
+`server/routes/webhooks.ts`; it verifies the signature, ignores duplicates
+and other environments, then credits the user who owns the address.
+
+**Without a real deposit** — send a signed test event to your local server:
+
+```bash
+npm run webhook:test               # valid event → deposit credited
+npm run webhook:test -- --twice    # same event twice → second is a duplicate
+npm run webhook:test -- --tamper   # body edited after signing → 401
+```
+
+**With real deposits** — expose the server and point the wallet at it:
+
+```bash
+ngrok http 3001
+# then set https://<your-id>.ngrok-free.app/webhooks/blockradar as the
+# Arc master wallet's webhook URL in the dashboard
+```
+
+⚠️ ngrok exposes the whole API, and `server/auth.ts` is a placeholder — run
+the tunnel only while testing.
+
 ## Environment variables
 
 All read by the API server only (`server/config.ts`).
@@ -73,6 +99,7 @@ All read by the API server only (`server/config.ts`).
 npm run dev       # API server + web app together
 npm run dev:api   # API server only (restarts on change)
 npm run dev:web   # web app only
+npm run webhook:test  # send a signed test deposit webhook to the local server
 npm run build     # typecheck (app + server) + production build of the web app
 npm test          # run the test suite
 npm run lint      # oxlint
@@ -88,9 +115,13 @@ server/
   auth.ts            # ⚠️ placeholder: who the current user is
   store.ts           # ⚠️ tiny JSON-file database (data/db.json)
   errors.ts          # what the browser is (and isn't) told when things fail
-  routes/deposit.ts  # POST /api/me/:network/deposit-address — one gasless address per user
+  webhook-signature.ts # HMAC-SHA512 signature check (+ tests)
+  routes/deposit.ts  # one gasless deposit address per user, and credited deposits
+  routes/webhooks.ts # POST /webhooks/blockradar — verify, dedupe, credit
   routes/account.ts  # GET /api/me/:network/{balance,transactions} — that address's money
   index.ts           # Express app
+scripts/
+  send-test-webhook.ts # signed fake deposit webhook for demos
 shared/types.ts      # data shapes shared by server and browser
 src/
   api/               # browser → /api calls (no secrets)
