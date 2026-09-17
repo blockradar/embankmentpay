@@ -43,68 +43,22 @@ withdrawRouter.post("/me/:network/withdraw/quote", async (req, res) => {
   res.json(quote);
 });
 
-withdrawRouter.post("/me/:network/withdrawals", async (req, res) => {
-  const userId = currentUserId(req);
-  const idempotencyKey = typeof req.body?.idempotencyKey === "string" ? req.body.idempotencyKey : "";
-  if (!/^[\w-]{8,64}$/.test(idempotencyKey)) {
-    throw new HttpError(400, "Missing idempotencyKey.");
-  }
-
-  // Same key as an earlier request (double-click, retry after a timeout)?
-  // Return that withdrawal instead of sending the money a second time.
-  const previous = store.findWithdrawal(userId, { idempotencyKey });
-  if (previous) {
-    res.json(toWithdrawal(previous));
-    return;
-  }
-  const inFlightKey = `${userId}:${idempotencyKey}`;
-  if (inFlight.has(inFlightKey)) {
-    throw new HttpError(409, "This withdrawal is already being sent.");
-  }
-
-  inFlight.add(inFlightKey);
-  try {
-    const { wallet, source, address, amount } = await validateWithdrawal(req);
-
-    // ⚠️ Real funds move here. `reference` ties Blockradar's record to ours.
-    const sent = await blockradar
-      .withdrawFromAddress(wallet.walletId, source.id, {
-        assetId: wallet.usdcAssetId,
-        address,
-        amount,
-        reference: idempotencyKey,
-        metadata: { userId },
-      })
-      .catch((err) => {
-        // Gasless means the MASTER WALLET pays gas, and Blockradar requires it
-        // to hold a minimum USDC balance (3 USD at the time of writing). That's
-        // the platform's problem to fix, not the user's — don't show them
-        // "top up your master wallet".
-        if (err instanceof blockradar.BlockradarError && /network fee|master wallet/i.test(err.message)) {
-          console.error(`[withdraw] ⚠️ master wallet can't sponsor gas: ${err.message}`);
-          throw new HttpError(503, "Withdrawals are temporarily unavailable. Please try again shortly.");
-        }
-        throw err;
-      });
-
-    const withdrawal: StoredWithdrawal = {
-      id: sent.id,
-      status: "PENDING", // final status arrives by webhook
-      amount,
-      address,
-      hash: sent.hash,
-      networkFee: null,
-      createdAt: new Date().toISOString(),
-      userId,
-      network: wallet.network,
-      idempotencyKey,
-    };
-    store.saveWithdrawal(withdrawal);
-    console.log(`[withdraw] sent ${amount} USDC from ${userId} to ${address} (${sent.id}, ${sent.status})`);
-    res.status(201).json(toWithdrawal(withdrawal));
-  } finally {
-    inFlight.delete(inFlightKey);
-  }
+withdrawRouter.post("/me/:network/withdrawals", async (_req, _res) => {
+  // 🧑‍💻 LIVE CODE — chapter 4. ⚠️ This sends real funds on mainnet.
+  //
+  //  1. userId = currentUserId(req); idempotencyKey from req.body (400 if missing)
+  //  2. store.findWithdrawal(userId, { idempotencyKey }) exists? → return it. Never send twice.
+  //  3. const { wallet, source, address, amount } = await validateWithdrawal(req)
+  //     (re-validate on the server — never trust the browser or its quote)
+  //  4. sent = await blockradar.withdrawFromAddress(wallet.walletId, source.id,
+  //       { assetId: wallet.usdcAssetId, address, amount, reference: idempotencyKey, metadata: { userId } })
+  //  5. store.saveWithdrawal({ id: sent.id, status: "PENDING", amount, address, hash: sent.hash,
+  //       networkFee: null, createdAt, userId, network: wallet.network, idempotencyKey })
+  //  6. res.status(201).json(toWithdrawal(withdrawal))
+  //     The final status + gas paid (in USDC, by MASTER_WALLET) arrives via withdraw.success.
+  //
+  // Answer key: git show master:server/routes/withdraw.ts
+  throw new HttpError(501, "Chapter 4: send the gasless withdrawal (server/routes/withdraw.ts)");
 });
 
 withdrawRouter.get("/me/:network/withdrawals/:id", (req, res) => {
@@ -112,9 +66,6 @@ withdrawRouter.get("/me/:network/withdrawals/:id", (req, res) => {
   if (!withdrawal) throw new HttpError(404, "Withdrawal not found.");
   res.json(toWithdrawal(withdrawal));
 });
-
-/** Requests currently sending, so two identical ones can't both reach Blockradar. */
-const inFlight = new Set<string>();
 
 /**
  * Every check runs on the server, again, at send time — never trust the

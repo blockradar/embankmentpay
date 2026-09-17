@@ -10,7 +10,7 @@
 import { Router } from "express";
 import type { CreditedDeposit, DepositAddress } from "../../shared/types";
 import { currentUserId } from "../auth";
-import * as blockradar from "../blockradar";
+import { HttpError } from "../errors";
 import { store, type StoredAddress } from "../store";
 import { getWallet, type LoadedWallet } from "../wallets";
 
@@ -61,31 +61,17 @@ function getOrCreateDepositAddress(userId: string, wallet: LoadedWallet): Promis
 }
 
 async function createDepositAddress(userId: string, wallet: LoadedWallet): Promise<StoredAddress> {
-  const created = await blockradar.createAddress(wallet.walletId, {
-    name: `user:${userId}`,
-    // Blockradar echoes metadata back on every transaction and webhook for
-    // this address — handy for tracing a deposit back to a user.
-    metadata: { userId },
-    // Keep the user's USDC on their own address, so they can withdraw from it.
-    disableAutoSweep: true,
-    // THE ARC HOOK: the master wallet pays this address's withdrawal gas.
-    // On Arc, gas is paid in USDC — so the platform needs only USDC, and the
-    // user never needs a separate gas token. Keep the master wallet funded:
-    // Blockradar requires a minimum USDC balance (3 USD) to sponsor gas.
-    enableGaslessWithdraw: true,
-  });
-
-  const stored: StoredAddress = {
-    id: created.id,
-    address: created.address,
-    network: wallet.network,
-    createdAt: new Date().toISOString(),
-  };
-  store.saveDepositAddress(userId, stored);
-
-  console.log(
-    `✓ created ${wallet.network} deposit address ${created.address} for ${userId} ` +
-      `(gasless: ${created.configurations.enableGaslessWithdraw}, auto-sweep off: ${created.configurations.disableAutoSweep})`,
-  );
-  return stored;
+  // 🧑‍💻 LIVE CODE — chapter 2.
+  //
+  //  1. blockradar.createAddress(wallet.walletId, { ... }) with:
+  //       name: `user:${userId}`            (never an email — it's stored at a third party)
+  //       metadata: { userId }              (echoed back on every webhook)
+  //       disableAutoSweep: true            (funds stay on the user's address)
+  //       enableGaslessWithdraw: true       (THE ARC HOOK: master wallet pays gas, in USDC)
+  //  2. Build a StoredAddress { id, address, network, createdAt } and
+  //     store.saveDepositAddress(userId, stored)
+  //  3. Return it.
+  //
+  // Answer key: git show master:server/routes/deposit.ts
+  throw new HttpError(501, `Chapter 2: create ${userId}'s gasless ${wallet.network} deposit address (server/routes/deposit.ts)`);
 }

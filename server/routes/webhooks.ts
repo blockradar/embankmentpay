@@ -10,10 +10,10 @@
  */
 import express, { Router } from "express";
 import type { BlockradarWebhookEvent } from "../blockradar";
-import { config, EXPECTED_NETWORK } from "../config";
+import { config } from "../config";
+import { HttpError } from "../errors";
 import { store } from "../store";
 import { isValidSignature } from "../webhook-signature";
-import { getWallet } from "../wallets";
 
 export const webhooksRouter = Router();
 
@@ -37,24 +37,15 @@ webhooksRouter.post(
     }
     const { event, data } = JSON.parse(rawBody.toString("utf8")) as BlockradarWebhookEvent;
 
-    // ② Seen it before? Blockradar retries any event that doesn't get a 200
-    //    (5 attempts over ~2.5 hours), and you can resend events manually.
-    //    Handling the same deposit twice would credit the user twice.
     const key = `${event}:${data.id}`;
-    if (store.hasProcessedWebhook(key)) {
-      console.log(`[webhook] ${key} already processed, skipping`);
-      res.json({ received: true, duplicate: true });
-      return;
-    }
 
-    // ③ Right environment? Acknowledge with 200 (so it isn't retried for
-    //    hours) but don't act on it.
-    if (data.network !== EXPECTED_NETWORK) {
-      console.warn(`[webhook] ignored ${key}: network is ${data.network}, expected ${EXPECTED_NETWORK}`);
-      store.markWebhookProcessed(key);
-      res.json({ received: true });
-      return;
-    }
+    // 🧑‍💻 LIVE CODE — chapter 3b.
+    // ② Seen it before? Blockradar retries for ~2.5 hours, and events can be
+    //    resent. If store.hasProcessedWebhook(key) → respond 200
+    //    { received: true, duplicate: true } and stop. (Try: npm run webhook:test -- --twice)
+    //
+    // ③ Wrong network? If data.network !== EXPECTED_NETWORK (from ../config) →
+    //    store.markWebhookProcessed(key), respond 200, stop. (200, so it isn't retried.)
 
     // ④ Handle it. This is quick (one database write), so we do it before
     //    responding: if it throws, Blockradar gets a 500 and retries. If your
@@ -80,44 +71,19 @@ webhooksRouter.post(
 );
 
 function handleDepositSuccess(key: string, data: BlockradarWebhookEvent["data"]) {
-  // Whose deposit address did the money arrive at?
-  const owner = data.address ? store.findDepositAddressById(data.address.id) : undefined;
-
-  // Also check it came through the wallet we configured for that network —
-  // cheap insurance against mixing up wallets.
-  const wallet = owner ? getWallet(owner.address.network) : undefined;
-  if (!owner || !wallet || wallet.walletId !== data.wallet.id) {
-    // e.g. a deposit straight to the master wallet, or an address this app didn't create.
-    console.warn(`[webhook] ${key} to ${data.recipientAddress}: no matching user address, not credited`);
-    store.markWebhookProcessed(key);
-    return;
-  }
-
-  // ARC GOTCHA: gas IS USDC on Arc. For a gasless withdrawal, the master
-  // wallet first sends the user's address a little USDC to pay the gas — and
-  // Blockradar reports that as a normal deposit.success. It's the platform's
-  // money, not the user's, so never credit a "deposit" from our own wallet.
-  if (data.senderAddress?.toLowerCase() === wallet.address.toLowerCase()) {
-    console.log(`[webhook] ${key}: ${data.amount} ${data.asset?.symbol} gas funding from the master wallet, not credited`);
-    store.markWebhookProcessed(key);
-    return;
-  }
-
-  // Blockradar screens deposits for sanctions (data.amlScreening). A
-  // production app should hold, not credit, anything flagged.
-
-  // In a real app, this is where you credit your ledger and notify the user,
-  // in the same database transaction as marking the event processed.
-  store.markWebhookProcessed(key, {
-    transactionId: data.id,
-    userId: owner.userId,
-    network: owner.address.network,
-    amount: data.amount,
-    asset: data.asset?.symbol ?? "USDC",
-    hash: data.hash,
-    creditedAt: new Date().toISOString(),
-  });
-  console.log(`[webhook] credited ${data.amount} ${data.asset?.symbol} to ${owner.userId} (${key})`);
+  // 🧑‍💻 LIVE CODE — chapter 3c.
+  //
+  //  1. owner = data.address && store.findDepositAddressById(data.address.id)
+  //     wallet = getWallet(owner.address.network)   (import from ../wallets)
+  //     No owner, or wallet.walletId !== data.wallet.id → markWebhookProcessed(key), stop.
+  //  2. ARC GOTCHA: gas IS USDC. A "deposit" whose data.senderAddress is our own
+  //     master wallet (wallet.address) is the gas top-up for a gasless withdrawal.
+  //     → markWebhookProcessed(key), don't credit.
+  //  3. store.markWebhookProcessed(key, { transactionId: data.id, userId, network,
+  //     amount: data.amount, asset, hash: data.hash, creditedAt }) — ONE write.
+  //
+  // Answer key: git show master:server/routes/webhooks.ts
+  throw new HttpError(501, `Chapter 3: credit deposit ${data.id} (${key}) in server/routes/webhooks.ts`);
 }
 
 /**

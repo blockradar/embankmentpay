@@ -6,20 +6,21 @@
  * Blockradar and your server know the key, so a matching signature proves
  * the event is genuine and wasn't modified in transit.
  */
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac } from "node:crypto";
 
 export function signWebhook(rawBody: Buffer | string, secret: string): string {
   return createHmac("sha512", secret).update(rawBody).digest("hex");
 }
 
-export function isValidSignature(rawBody: Buffer, signature: string | undefined, secret: string): boolean {
-  if (!signature) return false;
-
-  const expected = Buffer.from(signWebhook(rawBody, secret));
-  const received = Buffer.from(signature);
-
-  // timingSafeEqual takes the same time however many characters match, so
-  // an attacker can't guess the signature one character at a time by
-  // measuring response times. (It throws on different lengths — check first.)
-  return expected.length === received.length && timingSafeEqual(expected, received);
+export function isValidSignature(_rawBody: Buffer, _signature: string | undefined, _secret: string): boolean {
+  // 🧑‍💻 LIVE CODE — chapter 3a. `npm test` goes green when this is right.
+  //
+  //  1. No signature header? → false
+  //  2. expected = signWebhook(rawBody, secret)
+  //  3. Compare expected vs signature with crypto.timingSafeEqual (NOT ===),
+  //     so response timing can't leak how many characters matched.
+  //     timingSafeEqual throws if lengths differ — check lengths first.
+  //
+  // Answer key: git show master:server/webhook-signature.ts
+  return false;
 }
