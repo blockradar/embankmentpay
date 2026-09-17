@@ -14,15 +14,16 @@ import type {
  */
 export const api = {
   account: {
-    getBalance: (network: SettlementNetwork) => apiRequest<Balance>(`/wallets/${network}/balance`),
+    getBalance: (network: SettlementNetwork) => apiRequest<Balance>(`/me/${network}/balance`),
 
     getRecentTransactions: (network: SettlementNetwork, limit = 5) =>
-      apiRequest<Transaction[]>(`/wallets/${network}/transactions?limit=${limit}`),
+      apiRequest<Transaction[]>(`/me/${network}/transactions?limit=${limit}`),
   },
 
   deposit: {
-    createAddress: (network: SettlementNetwork) =>
-      apiRequest<DepositAddress>(`/wallets/${network}/deposit-addresses`, { method: "POST" }),
+    /** Returns the user's deposit address, creating it on first use. */
+    getAddress: (network: SettlementNetwork) =>
+      apiRequest<DepositAddress>(`/me/${network}/deposit-address`, { method: "POST" }),
   },
 
   withdraw: {

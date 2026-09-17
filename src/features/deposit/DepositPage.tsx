@@ -20,7 +20,7 @@ const CHAINS: SettlementNetwork[] = ["arc", "base"];
 export function DepositPage() {
   const [chain, setChain] = useState<SettlementNetwork>(DEFAULT_NETWORK);
   const { data: address, loading, error } = useAsync(
-    () => api.deposit.createAddress(chain),
+    () => api.deposit.getAddress(chain),
     [chain],
   );
 

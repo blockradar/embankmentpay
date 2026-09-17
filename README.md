@@ -85,8 +85,11 @@ server/
   config.ts          # env vars + "what changed from testnet → mainnet"
   wallets.ts         # loads and verifies each master wallet at startup
   blockradar.ts      # every Blockradar API call
+  auth.ts            # ⚠️ placeholder: who the current user is
+  store.ts           # ⚠️ tiny JSON-file database (data/db.json)
   errors.ts          # what the browser is (and isn't) told when things fail
-  routes/wallets.ts  # /api/wallets/:network/{balance,transactions,deposit-addresses}
+  routes/deposit.ts  # POST /api/me/:network/deposit-address — one gasless address per user
+  routes/account.ts  # GET /api/me/:network/{balance,transactions} — that address's money
   index.ts           # Express app
 shared/types.ts      # data shapes shared by server and browser
 src/

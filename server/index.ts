@@ -8,13 +8,15 @@
 import express from "express";
 import { config } from "./config";
 import { errorHandler } from "./errors";
-import { walletsRouter } from "./routes/wallets";
+import { accountRouter } from "./routes/account";
+import { depositRouter } from "./routes/deposit";
 import { loadWallets } from "./wallets";
 
 const app = express();
 app.use(express.json());
 
-app.use("/api", walletsRouter);
+app.use("/api", accountRouter);
+app.use("/api", depositRouter);
 
 // Must be registered after the routes it handles errors for.
 app.use(errorHandler);

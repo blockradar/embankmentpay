@@ -23,6 +23,7 @@ export interface BlockradarWallet {
 export interface BlockradarAddress {
   id: string;
   address: string;
+  configurations: { disableAutoSweep: boolean; enableGaslessWithdraw: boolean };
 }
 
 export interface BlockradarTransaction {
@@ -77,19 +78,35 @@ export function getWallet(walletId: string) {
   return request<BlockradarWallet>(`/wallets/${walletId}`);
 }
 
-/** GET /wallets/{walletId}/balance — the master wallet's balance of one asset. */
-export function getWalletBalance(walletId: string, assetId: string) {
+/**
+ * POST /wallets/{walletId}/addresses — generate a child address under a
+ * master wallet. Per-address settings override the master wallet's.
+ */
+export function createAddress(
+  walletId: string,
+  body: {
+    name: string;
+    /** Echoed back on every transaction and webhook for this address. */
+    metadata: Record<string, string>;
+    /** true → the user's funds stay on this address instead of moving to the master wallet. */
+    disableAutoSweep: boolean;
+    /** true → the master wallet pays gas when this address withdraws. */
+    enableGaslessWithdraw: boolean;
+  },
+) {
+  return request<BlockradarAddress>(`/wallets/${walletId}/addresses`, { method: "POST", body });
+}
+
+/** GET /wallets/{walletId}/addresses/{addressId}/balance — one address's balance of one asset. */
+export function getAddressBalance(walletId: string, addressId: string, assetId: string) {
   return request<{ balance: string; convertedBalance: string }>(
-    `/wallets/${walletId}/balance?assetId=${encodeURIComponent(assetId)}`,
+    `/wallets/${walletId}/addresses/${addressId}/balance?assetId=${encodeURIComponent(assetId)}`,
   );
 }
 
-/** GET /wallets/{walletId}/transactions — newest first. */
-export function getWalletTransactions(walletId: string, limit: number) {
-  return request<BlockradarTransaction[]>(`/wallets/${walletId}/transactions?limit=${limit}`);
-}
-
-/** POST /wallets/{walletId}/addresses — generate a new deposit (child) address. */
-export function createAddress(walletId: string, body: { name: string }) {
-  return request<BlockradarAddress>(`/wallets/${walletId}/addresses`, { method: "POST", body });
+/** GET /wallets/{walletId}/addresses/{addressId}/transactions — newest first. */
+export function getAddressTransactions(walletId: string, addressId: string, limit: number) {
+  return request<BlockradarTransaction[]>(
+    `/wallets/${walletId}/addresses/${addressId}/transactions?limit=${limit}&order=DESC`,
+  );
 }
