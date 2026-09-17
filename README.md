@@ -86,6 +86,17 @@ npm run tunnel   # ngrok, exposing ONLY POST /webhooks/blockradar (ngrok-webhook
 `/api` can move money. `npm run tunnel` uses a traffic policy that returns
 404 for everything except the webhook.
 
+## Operating gasless withdrawals on Arc
+
+- **Keep the master wallet funded.** Gasless means the master wallet pays
+  gas, and Blockradar requires it to hold at least **3 USD of USDC** to do so.
+  Below that, withdrawals fail (the server logs it; users see "temporarily
+  unavailable").
+- **Gas funding looks like a deposit.** On Arc, gas *is* USDC: the master wallet
+  tops up the user's address with a little USDC before a gasless withdrawal,
+  and Blockradar reports it as `deposit.success`. The webhook handler skips
+  deposits sent by your own master wallet so they're never credited to users.
+
 ## Environment variables
 
 All read by the API server only (`server/config.ts`).

@@ -85,9 +85,20 @@ function handleDepositSuccess(key: string, data: BlockradarWebhookEvent["data"])
 
   // Also check it came through the wallet we configured for that network —
   // cheap insurance against mixing up wallets.
-  if (!owner || getWallet(owner.address.network).walletId !== data.wallet.id) {
+  const wallet = owner ? getWallet(owner.address.network) : undefined;
+  if (!owner || !wallet || wallet.walletId !== data.wallet.id) {
     // e.g. a deposit straight to the master wallet, or an address this app didn't create.
     console.warn(`[webhook] ${key} to ${data.recipientAddress}: no matching user address, not credited`);
+    store.markWebhookProcessed(key);
+    return;
+  }
+
+  // ARC GOTCHA: gas IS USDC on Arc. For a gasless withdrawal, the master
+  // wallet first sends the user's address a little USDC to pay the gas — and
+  // Blockradar reports that as a normal deposit.success. It's the platform's
+  // money, not the user's, so never credit a "deposit" from our own wallet.
+  if (data.senderAddress?.toLowerCase() === wallet.address.toLowerCase()) {
+    console.log(`[webhook] ${key}: ${data.amount} ${data.asset?.symbol} gas funding from the master wallet, not credited`);
     store.markWebhookProcessed(key);
     return;
   }

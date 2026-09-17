@@ -70,7 +70,8 @@ async function createDepositAddress(userId: string, wallet: LoadedWallet): Promi
     disableAutoSweep: true,
     // THE ARC HOOK: the master wallet pays this address's withdrawal gas.
     // On Arc, gas is paid in USDC — so the platform needs only USDC, and the
-    // user never needs a separate gas token.
+    // user never needs a separate gas token. Keep the master wallet funded:
+    // Blockradar requires a minimum USDC balance (3 USD) to sponsor gas.
     enableGaslessWithdraw: true,
   });
 

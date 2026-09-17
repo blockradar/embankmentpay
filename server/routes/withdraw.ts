@@ -67,13 +67,25 @@ withdrawRouter.post("/me/:network/withdrawals", async (req, res) => {
     const { wallet, source, address, amount } = await validateWithdrawal(req);
 
     // ⚠️ Real funds move here. `reference` ties Blockradar's record to ours.
-    const sent = await blockradar.withdrawFromAddress(wallet.walletId, source.id, {
-      assetId: wallet.usdcAssetId,
-      address,
-      amount,
-      reference: idempotencyKey,
-      metadata: { userId },
-    });
+    const sent = await blockradar
+      .withdrawFromAddress(wallet.walletId, source.id, {
+        assetId: wallet.usdcAssetId,
+        address,
+        amount,
+        reference: idempotencyKey,
+        metadata: { userId },
+      })
+      .catch((err) => {
+        // Gasless means the MASTER WALLET pays gas, and Blockradar requires it
+        // to hold a minimum USDC balance (3 USD at the time of writing). That's
+        // the platform's problem to fix, not the user's — don't show them
+        // "top up your master wallet".
+        if (err instanceof blockradar.BlockradarError && /network fee|master wallet/i.test(err.message)) {
+          console.error(`[withdraw] ⚠️ master wallet can't sponsor gas: ${err.message}`);
+          throw new HttpError(503, "Withdrawals are temporarily unavailable. Please try again shortly.");
+        }
+        throw err;
+      });
 
     const withdrawal: StoredWithdrawal = {
       id: sent.id,

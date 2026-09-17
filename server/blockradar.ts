@@ -52,6 +52,7 @@ export interface BlockradarWebhookEvent {
     amount: string;
     hash: string | null;
     network: "mainnet" | "testnet";
+    senderAddress: string | null;
     recipientAddress: string | null;
     asset: { symbol: string } | null;
     /** The child address involved; null for transactions on the master wallet itself. */
