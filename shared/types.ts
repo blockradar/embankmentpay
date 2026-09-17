@@ -11,6 +11,8 @@ export type SettlementNetwork = "arc" | "base";
 export interface Balance {
   totalUsd: number;
   availableUsd: number;
+  /** Exact USDC balance as a decimal string, e.g. "0.009025". */
+  available: string;
   network: SettlementNetwork;
   asset: "USDC";
 }
@@ -23,6 +25,9 @@ export interface Transaction {
   title: string;
   subtitle: string;
   amountUsd: number;
+  /** Exact amount in asset units as a decimal string, e.g. "0.001358". Unsigned. */
+  amount: string;
+  asset: string;
   timestampLabel: string;
   occurredAt: string; // ISO
 }

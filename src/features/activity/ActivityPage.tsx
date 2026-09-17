@@ -3,7 +3,7 @@ import { api } from "../../api";
 import { useAsync } from "../../lib/useAsync";
 import { DEFAULT_NETWORK } from "../../config/networks";
 import { TransactionGlyph } from "../dashboard/transactionIcons";
-import { formatSigned, formatUsd } from "../../lib/format";
+import { formatUsdc } from "../../lib/format";
 import type { Transaction } from "../../api/types";
 import card from "../dashboard/Card.module.css";
 import styles from "./ActivityPage.module.css";
@@ -40,7 +40,7 @@ export function ActivityPage() {
         <div className={card.card}>
           <div className={styles.statLabel}>Available</div>
           <div className={`${styles.statAmount} ep-serif`}>
-            {balanceState.data ? formatUsd(balanceState.data.availableUsd) : "—"}
+            {balanceState.data ? `${formatUsdc(balanceState.data.available)} USDC` : "—"}
           </div>
         </div>
       </div>
@@ -78,7 +78,8 @@ export function ActivityPage() {
                 </div>
                 <div className={styles.amountCol}>
                   <div className={`${styles.amount} ${txn.amountUsd >= 0 ? styles.positive : ""}`}>
-                    {formatSigned(txn.amountUsd)}
+                    {txn.amountUsd < 0 ? "−" : "+"}
+                    {formatUsdc(txn.amount)} {txn.asset}
                   </div>
                   <div className={styles.timestamp}>{txn.timestampLabel}</div>
                 </div>

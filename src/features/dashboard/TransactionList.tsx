@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import type { Transaction } from "../../api/types";
-import { formatSigned } from "../../lib/format";
+import { formatUsdc } from "../../lib/format";
 import card from "./Card.module.css";
 import styles from "./TransactionList.module.css";
 import { TransactionGlyph } from "./transactionIcons";
@@ -27,7 +27,8 @@ export function TransactionList({ transactions }: { transactions: Transaction[] 
             </div>
             <div className={styles.amountCol}>
               <div className={`${styles.amount} ${txn.amountUsd >= 0 ? styles.positive : ""}`}>
-                {formatSigned(txn.amountUsd)}
+                {txn.amountUsd < 0 ? "−" : "+"}
+                    {formatUsdc(txn.amount)} {txn.asset}
               </div>
               <div className={styles.timestamp}>{txn.timestampLabel}</div>
             </div>

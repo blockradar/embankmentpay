@@ -32,6 +32,9 @@ export interface BlockradarTransaction {
   type: string;
   /** "PENDING", "PROCESSING", "SUCCESS", "FAILED", ... */
   status: string;
+  /** Decimal string in asset units. */
+  amount: string;
+  senderAddress: string | null;
   amountUSD: string;
   createdAt: string;
   asset: { symbol: string } | null;

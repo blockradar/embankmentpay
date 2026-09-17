@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import type { Balance } from "../../api/types";
-import { formatUsd } from "../../lib/format";
+import { formatUsdc } from "../../lib/format";
 import { NETWORK_LABELS } from "../../config/networks";
 import card from "./Card.module.css";
 import styles from "./BalanceCard.module.css";
@@ -12,11 +12,11 @@ export function BalanceCard({ balance }: { balance: Balance }) {
       <div className={styles.eyebrow}>
         Total balance &middot; {balance.asset} on {NETWORK_LABELS[balance.network]}
       </div>
-      <div className={styles.amount}>{formatUsd(balance.totalUsd)}</div>
+      <div className={styles.amount}>{formatUsdc(balance.available)} USDC</div>
 
       <div className={styles.stats}>
         <span>
-          Available <b>{formatUsd(balance.availableUsd)}</b>
+          Available <b>{formatUsdc(balance.available)} USDC</b>
         </span>
       </div>
 
