@@ -1,14 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { env } from "../../config/env";
 import styles from "./Sidebar.module.css";
-import {
-  ActivityIcon,
-  DashboardIcon,
-  DownloadIcon,
-  EarnIcon,
-  PlusIcon,
-  SwapIcon,
-} from "./icons";
+import { ActivityIcon, DashboardIcon, DownloadIcon, PlusIcon } from "./icons";
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   isActive ? styles.linkActive : styles.link;
@@ -26,10 +19,6 @@ export function Sidebar() {
           <DashboardIcon />
           Dashboard
         </NavLink>
-        <NavLink to="/earn" className={linkClass}>
-          <EarnIcon />
-          Earn
-        </NavLink>
         <NavLink to="/activity" className={linkClass}>
           <ActivityIcon />
           Activity
@@ -43,10 +32,6 @@ export function Sidebar() {
         <NavLink to="/withdraw" className={linkClass}>
           <DownloadIcon />
           Withdraw
-        </NavLink>
-        <NavLink to="/swap" className={linkClass}>
-          <SwapIcon />
-          Swap
         </NavLink>
       </nav>
 

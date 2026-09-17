@@ -19,15 +19,3 @@ export function truncateAddress(address: string): string {
   if (address.length <= 12) return address;
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
-
-/** "Rate locked for Ns" below a minute, "M:SS" at or above — used by any
- * flow with a rate-locked quote countdown (Swap; the fiat withdraw quote
- * this was built for is currently unwired, see withdraw.service.ts). */
-export function formatCountdown(seconds: number): string {
-  if (seconds >= 60) {
-    const minutes = Math.floor(seconds / 60);
-    const remainder = seconds % 60;
-    return `${minutes}:${remainder.toString().padStart(2, "0")}`;
-  }
-  return `${seconds}s`;
-}

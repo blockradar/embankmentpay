@@ -7,9 +7,8 @@ import card from "../features/dashboard/Card.module.css";
 import styles from "./FlowComplete.module.css";
 
 /**
- * Shared terminal screen for every money-movement flow: green check,
- * headline, description, updated balance, and the two standard exits.
- * Deposit uses it now; Withdraw/Swap/Earn reuse it in later phases.
+ * Shared terminal screen for money-movement flows: green check, headline,
+ * description, updated balance, and the two standard exits.
  */
 export function FlowComplete({
   headline,

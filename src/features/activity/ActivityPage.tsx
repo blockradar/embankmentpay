@@ -1,41 +1,32 @@
 import { useState } from "react";
-import { useAccountStore } from "../../api/adapters/mock/accountStore";
+import { api } from "../../api";
+import { useAsync } from "../../lib/useAsync";
 import { TransactionGlyph } from "../dashboard/transactionIcons";
 import { formatSigned, formatUsd } from "../../lib/format";
-import type { Transaction, TransactionKind } from "../../api/types";
+import type { Transaction } from "../../api/types";
 import card from "../dashboard/Card.module.css";
 import styles from "./ActivityPage.module.css";
 
-type Filter = "all" | "in" | "out" | "earn";
-
-const EARN_KINDS: TransactionKind[] = ["yield", "earn-add", "earn-withdraw"];
-
-function matchesFilter(txn: Transaction, filter: Filter): boolean {
-  if (filter === "all") return true;
-  if (filter === "earn") return EARN_KINDS.includes(txn.kind);
-  if (EARN_KINDS.includes(txn.kind)) return false; // earn activity only shows under "Earn"
-  return filter === "in" ? txn.amountUsd >= 0 : txn.amountUsd < 0;
-}
+type Filter = "all" | "in" | "out";
 
 const FILTERS: { id: Filter; label: string }[] = [
   { id: "all", label: "All" },
   { id: "in", label: "In" },
   { id: "out", label: "Out" },
-  { id: "earn", label: "Earn" },
 ];
 
-/**
- * Deliberately mock, not wired to api.deposit — reads the account store
- * directly, the same way Bank transfer deposits stay mocked even while
- * Deposit itself is live. Keeps this page's balance figures and the full
- * transaction history internally consistent on one dataset rather than
- * mixing a live balance with a mock-only history.
- */
+function matchesFilter(txn: Transaction, filter: Filter): boolean {
+  if (filter === "all") return true;
+  return filter === "in" ? txn.amountUsd >= 0 : txn.amountUsd < 0;
+}
+
 export function ActivityPage() {
-  const balance = useAccountStore((s) => s.balance);
-  const transactions = useAccountStore((s) => s.transactions);
+  const balanceState = useAsync(() => api.deposit.getBalance(), []);
+  const transactionsState = useAsync(() => api.deposit.getRecentTransactions(50), []);
   const [filter, setFilter] = useState<Filter>("all");
 
+  const error = balanceState.error ?? transactionsState.error;
+  const transactions = transactionsState.data ?? [];
   const filtered = transactions.filter((txn) => matchesFilter(txn, filter));
 
   return (
@@ -47,15 +38,9 @@ export function ActivityPage() {
       <div className={styles.stats}>
         <div className={card.card}>
           <div className={styles.statLabel}>Available</div>
-          <div className={`${styles.statAmount} ep-serif`}>{formatUsd(balance.availableUsd)}</div>
-        </div>
-        <div className={card.card}>
-          <div className={styles.statLabel}>In Earn</div>
-          <div className={`${styles.statAmount} ep-serif`}>{formatUsd(balance.inEarnUsd)}</div>
-        </div>
-        <div className={card.card}>
-          <div className={styles.statLabel}>Total</div>
-          <div className={`${styles.statAmount} ep-serif`}>{formatUsd(balance.totalUsd)}</div>
+          <div className={`${styles.statAmount} ep-serif`}>
+            {balanceState.data ? formatUsd(balanceState.data.availableUsd) : "—"}
+          </div>
         </div>
       </div>
 
@@ -73,7 +58,11 @@ export function ActivityPage() {
       </div>
 
       <section className={card.card}>
-        {filtered.length === 0 ? (
+        {error ? (
+          <p className={styles.empty}>{error.message}</p>
+        ) : transactionsState.loading ? (
+          <p className={styles.empty}>Loading activity&hellip;</p>
+        ) : filtered.length === 0 ? (
           <p className={styles.empty}>No activity in this filter yet.</p>
         ) : (
           <ul className={styles.list}>
@@ -90,7 +79,7 @@ export function ActivityPage() {
                   <div className={`${styles.amount} ${txn.amountUsd >= 0 ? styles.positive : ""}`}>
                     {formatSigned(txn.amountUsd)}
                   </div>
-                  <div className={styles.timestamp}>Completed &middot; {txn.timestampLabel}</div>
+                  <div className={styles.timestamp}>{txn.timestampLabel}</div>
                 </div>
               </li>
             ))}

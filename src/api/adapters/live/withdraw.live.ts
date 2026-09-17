@@ -7,8 +7,4 @@ const notImplemented = (): never => {
 export const withdrawLiveAdapter: WithdrawService = {
   getCryptoWithdrawFee: notImplemented,
   executeCryptoWithdraw: notImplemented,
-  getWithdrawSession: notImplemented,
-  resolvePaymentAccount: notImplemented,
-  getFiatWithdrawQuote: notImplemented,
-  executeFiatWithdraw: notImplemented,
 };

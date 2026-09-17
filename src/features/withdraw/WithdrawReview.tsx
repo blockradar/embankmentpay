@@ -17,8 +17,8 @@ function formatArrival(seconds: number): string {
 /**
  * Withdraw's one hard review step — a same-chain on-chain send is
  * irreversible once confirmed, unlike Deposit, so a pause is warranted.
- * Unlike fiat withdraw or swap, there's no rate-locked quote/session here
- * (just a point-in-time network-fee estimate), so no countdown.
+ * There's no rate-locked quote here, just a point-in-time network-fee
+ * estimate, so no countdown.
  */
 export function WithdrawReview({
   network,

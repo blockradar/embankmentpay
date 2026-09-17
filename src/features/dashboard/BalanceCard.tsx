@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 import type { Balance } from "../../api/types";
-import { formatSigned, formatUsd } from "../../lib/format";
+import { formatUsd } from "../../lib/format";
 import card from "./Card.module.css";
 import styles from "./BalanceCard.module.css";
-import { DownloadIcon, PlusIcon, SwapIcon } from "../shell/icons";
+import { DownloadIcon, PlusIcon } from "../shell/icons";
 
 export function BalanceCard({ balance }: { balance: Balance }) {
   return (
@@ -17,10 +17,6 @@ export function BalanceCard({ balance }: { balance: Balance }) {
         <span>
           Available <b>{formatUsd(balance.availableUsd)}</b>
         </span>
-        <span>
-          In Earn <b>{formatUsd(balance.inEarnUsd)}</b>
-        </span>
-        <span className={styles.positive}>{formatSigned(balance.todayDeltaUsd)} today</span>
       </div>
 
       <div className={styles.actions}>
@@ -29,9 +25,6 @@ export function BalanceCard({ balance }: { balance: Balance }) {
         </Link>
         <Link to="/withdraw" className={styles.secondary}>
           <DownloadIcon /> Withdraw
-        </Link>
-        <Link to="/swap" className={styles.secondary}>
-          <SwapIcon /> Swap
         </Link>
       </div>
     </section>

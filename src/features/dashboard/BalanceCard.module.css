@@ -32,11 +32,6 @@
   font-weight: 600;
 }
 
-.positive {
-  color: var(--ep-green);
-  font-weight: 600;
-}
-
 .actions {
   display: flex;
   gap: var(--ep-space-3);

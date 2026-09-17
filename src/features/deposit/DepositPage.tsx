@@ -1,68 +1,75 @@
 import { useState } from "react";
-import { BankIcon, CoinIcon } from "../shell/icons";
+import { api } from "../../api";
+import { env } from "../../config/env";
+import { useAsync } from "../../lib/useAsync";
 import { StepHeader } from "../../components/StepHeader";
 import { FlowLayout } from "../../components/FlowLayout";
-import { FlowComplete } from "../../components/FlowComplete";
-import { SelectableCard } from "../../components/SelectableCard";
-import { BankTransferPanel } from "./BankTransferPanel";
-import { StablecoinPanel } from "./StablecoinPanel";
+import { CopyButton } from "../../components/CopyButton";
+import { QrCode } from "../../components/QrCode";
+import type { SettlementNetwork } from "../../api/types";
+import card from "../dashboard/Card.module.css";
 import styles from "./DepositPage.module.css";
 
-type Method = "bank" | "stablecoin";
-
-interface CompleteInfo {
-  headline: string;
-  description: string;
-  newBalanceUsd: number;
-}
+const CHAINS: SettlementNetwork[] = ["arc", "base"];
 
 /**
- * Deposit flow, simplified to method → instructions → done (no amount
- * entry, no separate review step): both Blockradar funding methods are
- * push-based — we hand the user an account number or address and they send
- * to it externally, so there's nothing for the app to "review" first.
+ * Deposit flow: pick a network, get a dedicated Blockradar deposit address,
+ * send USDC to it from any wallet or exchange. Deposits are push-based, so
+ * there's no amount entry or review step here.
  */
 export function DepositPage() {
-  const [method, setMethod] = useState<Method | null>(null);
-  const [complete, setComplete] = useState<CompleteInfo | null>(null);
+  const [chain, setChain] = useState<SettlementNetwork>(env.defaultNetwork);
+  const { data: address, loading, error } = useAsync(
+    () => api.deposit.createStablecoinAddress(chain),
+    [chain],
+  );
 
-  if (complete) {
-    return (
-      <FlowComplete
-        headline={complete.headline}
-        description={complete.description}
-        newBalanceUsd={complete.newBalanceUsd}
-      />
-    );
-  }
-
-  if (method === "bank") {
-    return <BankTransferPanel onBack={() => setMethod(null)} onComplete={setComplete} />;
-  }
-
-  if (method === "stablecoin") {
-    return <StablecoinPanel onBack={() => setMethod(null)} onComplete={setComplete} />;
-  }
+  const chainLabel = env.networks[chain].label;
 
   return (
     <FlowLayout>
-      <StepHeader title="Add money" />
-      <p className={styles.subtitle}>Everything you add settles as USDC.</p>
-      <div className={styles.cardList}>
-        <SelectableCard
-          icon={<CoinIcon />}
-          title="Stablecoin"
-          subtitle="USDC or USDT from Arc, Base, Ethereum, Polygon, Solana, Tron"
-          showChevron
-          onClick={() => setMethod("stablecoin")}
-        />
-        <SelectableCard
-          icon={<BankIcon />}
-          title="Bank transfer"
-          subtitle="USD · usually within minutes"
-          showChevron
-          onClick={() => setMethod("bank")}
-        />
+      <StepHeader title="Deposit USDC" />
+      <div className={`${card.card} ${styles.detailCard}`}>
+        <div className={styles.chainRow}>
+          {CHAINS.map((id) => (
+            <button
+              key={id}
+              type="button"
+              className={`${styles.chip} ${chain === id ? styles.chipSelected : ""}`}
+              onClick={() => setChain(id)}
+            >
+              {env.networks[id].label}
+            </button>
+          ))}
+        </div>
+
+        {error ? (
+          <p className={styles.error}>{error.message}</p>
+        ) : loading || !address ? (
+          <p className={styles.loading}>Generating your {chainLabel} deposit address&hellip;</p>
+        ) : (
+          <>
+            <div className={styles.qrRow}>
+              <QrCode value={address.address} size={120} />
+              <div className={styles.addressCol}>
+                <div className={styles.address}>{address.address}</div>
+                <div className={styles.fieldActions}>
+                  <CopyButton value={address.address} label="Copy address" />
+                </div>
+              </div>
+            </div>
+
+            <ol className={styles.instructions}>
+              <li>
+                <b>1</b> Send USDC on {chainLabel} from any wallet or exchange.
+              </li>
+              <li>
+                <b>2</b> Only use the {chainLabel} network — funds sent on another network won't
+                arrive.
+              </li>
+            </ol>
+          </>
+        )}
       </div>
     </FlowLayout>
   );

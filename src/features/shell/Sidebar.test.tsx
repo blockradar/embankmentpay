@@ -7,12 +7,12 @@ import styles from "./Sidebar.module.css";
 describe("Sidebar", () => {
   it("marks the current route's link as active and leaves others inactive", () => {
     render(
-      <MemoryRouter initialEntries={["/earn"]}>
+      <MemoryRouter initialEntries={["/activity"]}>
         <Sidebar />
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("link", { name: /earn/i })).toHaveClass(styles.linkActive);
+    expect(screen.getByRole("link", { name: /activity/i })).toHaveClass(styles.linkActive);
     expect(screen.getByRole("link", { name: /dashboard/i })).not.toHaveClass(styles.linkActive);
   });
 
