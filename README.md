@@ -57,10 +57,14 @@ network. The base URL, endpoints, and response shapes are the same.
 
 ## Receiving webhooks
 
-Blockradar tells your server about deposits by POSTing to a webhook URL set
-on the master wallet (dashboard → wallet settings). The handler is
-`server/routes/webhooks.ts`; it verifies the signature, ignores duplicates
-and other environments, then credits the user who owns the address.
+Blockradar tells your server about deposits by POSTing to a webhook URL. The
+handler is `server/routes/webhooks.ts`; it verifies the signature, ignores
+duplicates and other environments, then credits the user who owns the address.
+
+⚠️ **Set the webhook URL on the same Developers page your API key came from.**
+Blockradar signs each webhook with the key from the page the URL is set on. A
+URL on a master wallet's own developer page is signed with that wallet's key,
+so with an account-level `BLOCKRADAR_API_KEY` every event fails with 401.
 
 **Without a real deposit** — send a signed test event to your local server:
 
@@ -75,7 +79,7 @@ npm run webhook:test -- --tamper   # body edited after signing → 401
 ```bash
 ngrok http 3001
 # then set https://<your-id>.ngrok-free.app/webhooks/blockradar as the
-# Arc master wallet's webhook URL in the dashboard
+# webhook URL on the dashboard's Developers page (where your API key is)
 ```
 
 ⚠️ ngrok exposes the whole API, and `server/auth.ts` is a placeholder — run

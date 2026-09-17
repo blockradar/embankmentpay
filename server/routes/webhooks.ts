@@ -1,10 +1,12 @@
 /**
  * POST /webhooks/blockradar — STEP 2 of the core flow: handle a deposit.
  *
- * Blockradar calls this URL when something happens on your master wallet
- * (set it under the wallet's settings in the dashboard). But it's a public
- * URL — anyone can POST to it — so every request is treated as hostile
- * until its signature proves it came from Blockradar.
+ * Blockradar calls this URL when something happens on your wallets. Set it
+ * on the dashboard's Developers page — the same page BLOCKRADAR_API_KEY came
+ * from, because Blockradar signs webhooks with that page's key.
+ *
+ * It's a public URL — anyone can POST to it — so every request is treated
+ * as hostile until its signature proves it came from Blockradar.
  */
 import express, { Router } from "express";
 import type { BlockradarWebhookEvent } from "../blockradar";

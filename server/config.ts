@@ -24,9 +24,12 @@ import type { SettlementNetwork } from "../shared/types";
 //     to run if it's on the wrong network (see server/wallets.ts). A
 //     leftover testnet key fails loudly instead of silently.
 //
-//  4. Webhook signing secret
-//     Blockradar signs webhooks with your API key — the live key is also
-//     your live webhook secret.
+//  4. Webhook URL + signing key
+//     Blockradar signs each webhook with the API key from the page where
+//     the webhook URL is set. Set the URL on the SAME Developers page your
+//     BLOCKRADAR_API_KEY came from. A URL set on a master wallet's own
+//     developer page is signed with that wallet's key instead, and every
+//     event fails verification with 401.
 //
 //  5. IP allowlist
 //     If your live key has an IP allowlist, calls from any other IP fail
